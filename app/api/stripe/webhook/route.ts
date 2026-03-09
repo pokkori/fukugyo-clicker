@@ -30,10 +30,13 @@ export async function POST(req: NextRequest) {
   }
 
   if (event.type === "customer.subscription.updated") {
-    const sub = event.data.object as Stripe.Subscription;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const sub = event.data.object as any;
     await supabase.from("subscriptions").update({
       status: sub.status,
-      current_period_end: new Date(sub.current_period_end * 1000).toISOString(),
+      current_period_end: sub.current_period_end
+        ? new Date(sub.current_period_end * 1000).toISOString()
+        : new Date().toISOString(),
       updated_at: new Date().toISOString(),
     }).eq("stripe_subscription_id", sub.id).eq("app_id", APP_ID);
   }
