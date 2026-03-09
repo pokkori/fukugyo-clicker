@@ -3,6 +3,9 @@ name: Deploy to Vercel
 on:
   push:
     branches: [master, main]
+  workflow_dispatch:
+  schedule:
+    - cron: '0 17 * * *'  # 毎日 JST 02:00 (UTC 17:00) に自動再試行
 
 jobs:
   deploy:
