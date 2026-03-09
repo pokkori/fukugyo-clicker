@@ -16,7 +16,7 @@ export default function LegalPage() {
   return (
     <main className="min-h-screen bg-gray-50">
       <header className="bg-white border-b px-6 py-4">
-        <Link href="/" className="font-bold text-gray-900">📣 SNS投稿ジェネレーター</Link>
+        <Link href="/" className="font-bold text-gray-900">💼 副業アドバイザーAI</Link>
       </header>
       <div className="max-w-2xl mx-auto px-6 py-12">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">特定商取引法に基づく表記</h1>
