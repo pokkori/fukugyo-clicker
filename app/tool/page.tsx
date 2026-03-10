@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import PayjpModal from "@/components/PayjpModal";
 
 const FREE_LIMIT = 3;
 const KEY = "fukugyo_count";
@@ -30,13 +31,7 @@ function parseResult(text: string): ParsedResult {
   return { sections, raw: text };
 }
 
-async function startCheckout() {
-  const res = await fetch("/api/stripe/checkout", { method: "POST" });
-  const { url } = await res.json();
-  if (url) window.location.href = url;
-}
-
-function Paywall({ onClose }: { onClose: () => void }) {
+function Paywall({ onClose, onOpenPayjp }: { onClose: () => void; onOpenPayjp: () => void }) {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
       <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl text-center">
@@ -50,7 +45,7 @@ function Paywall({ onClose }: { onClose: () => void }) {
           <li>✓ SNS集客戦略・バズネタ提案</li>
           <li>✓ いつでもキャンセル可能</li>
         </ul>
-        <button onClick={startCheckout} className="block w-full bg-amber-500 text-white font-bold py-3 rounded-xl hover:bg-amber-600 mb-3">
+        <button onClick={onOpenPayjp} className="block w-full bg-amber-500 text-white font-bold py-3 rounded-xl hover:bg-amber-600 mb-3">
           ¥980/月で始める
         </button>
         <button onClick={onClose} className="text-xs text-gray-400">閉じる</button>
@@ -105,6 +100,7 @@ export default function FukugyoTool() {
   const [loading, setLoading] = useState(false);
   const [count, setCount] = useState(0);
   const [showPaywall, setShowPaywall] = useState(false);
+  const [showPayjp, setShowPayjp] = useState(false);
   const [error, setError] = useState("");
   const [isPremium, setIsPremium] = useState(false);
 
@@ -139,7 +135,15 @@ export default function FukugyoTool() {
 
   return (
     <main className="min-h-screen bg-gray-50">
-      {showPaywall && <Paywall onClose={() => setShowPaywall(false)} />}
+      {showPayjp && (
+        <PayjpModal
+          publicKey={process.env.NEXT_PUBLIC_PAYJP_PUBLIC_KEY!}
+          planLabel="副業アドバイザーAI プレミアム ¥980/月（いつでもキャンセル可）"
+          onSuccess={() => { setShowPayjp(false); setShowPaywall(false); setIsPremium(true); }}
+          onClose={() => setShowPayjp(false)}
+        />
+      )}
+      {showPaywall && <Paywall onClose={() => setShowPaywall(false)} onOpenPayjp={() => { setShowPaywall(false); setShowPayjp(true); }} />}
       <nav className="bg-white border-b px-6 py-4">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
           <Link href="/" className="font-bold text-gray-900">🎯 AI副業アドバイザー</Link>
