@@ -1,145 +1,329 @@
 "use client";
-import { useState } from "react";
-import Link from "next/link";
+import { useState, useEffect, useCallback, useRef } from "react";
 
-export default function Home() {
-  const [loading, setLoading] = useState(false);
+// ===== GAME DATA =====
+const JOBS = [
+  { id: "part_time", name: "コンビニバイト", icon: "🏪", baseCost: 10, baseIncome: 0.1, desc: "¥0.1/秒" },
+  { id: "freelance", name: "フリーランス案件", icon: "💻", baseCost: 100, baseIncome: 1, desc: "¥1/秒" },
+  { id: "youtube", name: "YouTubeチャンネル", icon: "🎬", baseCost: 1_000, baseIncome: 8, desc: "¥8/秒" },
+  { id: "blog", name: "アフィリエイトブログ", icon: "📝", baseCost: 8_000, baseIncome: 50, desc: "¥50/秒" },
+  { id: "ebook", name: "電子書籍出版", icon: "📚", baseCost: 50_000, baseIncome: 300, desc: "¥300/秒" },
+  { id: "saas", name: "SaaSプロダクト", icon: "⚙️", baseCost: 300_000, baseIncome: 2_000, desc: "¥2,000/秒" },
+  { id: "investment", name: "不動産投資", icon: "🏢", baseCost: 2_000_000, baseIncome: 15_000, desc: "¥15,000/秒" },
+  { id: "startup", name: "スタートアップ創業", icon: "🚀", baseCost: 15_000_000, baseIncome: 120_000, desc: "¥120,000/秒" },
+] as const;
 
-  async function startCheckout() {
-    setLoading(true);
-    const res = await fetch("/api/stripe/checkout", { method: "POST" });
-    const data = await res.json();
-    if (data.url) window.location.href = data.url;
-    else setLoading(false);
-  }
+type JobId = typeof JOBS[number]["id"];
+
+const CLICK_VALUE_UPGRADES = [
+  { id: "mouse1", name: "やる気UP", icon: "💪", cost: 50, mult: 2, desc: "クリック値×2" },
+  { id: "mouse2", name: "集中力MAX", icon: "🧠", cost: 500, mult: 5, desc: "クリック値×5" },
+  { id: "mouse3", name: "副業スキル習得", icon: "🎯", cost: 5_000, mult: 10, desc: "クリック値×10" },
+  { id: "mouse4", name: "経営センス覚醒", icon: "👑", cost: 100_000, mult: 50, desc: "クリック値×50" },
+] as const;
+
+const GOAL = 1_000_000;
+
+function fmt(n: number): string {
+  if (n >= 1_000_000_000) return `¥${(n / 1_000_000_000).toFixed(1)}億`;
+  if (n >= 1_000_000) return `¥${(n / 1_000_000).toFixed(2)}万`;
+  if (n >= 10_000) return `¥${Math.floor(n / 10_000)}万${Math.floor((n % 10_000) / 1000)}千`;
+  if (n >= 1000) return `¥${(n / 1000).toFixed(1)}千`;
+  return `¥${Math.floor(n)}`;
+}
+
+const SAVE_KEY = "fukugyo_save_v2";
+
+interface Save {
+  money: number;
+  totalEarned: number;
+  clickMult: number;
+  jobs: Record<string, number>;
+  boughtUpgrades: string[];
+}
+
+function loadSave(): Save {
+  try {
+    const s = localStorage.getItem(SAVE_KEY);
+    if (s) return JSON.parse(s);
+  } catch {}
+  return { money: 0, totalEarned: 0, clickMult: 1, jobs: {}, boughtUpgrades: [] };
+}
+
+export default function FukugyoClicker() {
+  const [money, setMoney] = useState(0);
+  const [totalEarned, setTotalEarned] = useState(0);
+  const [clickMult, setClickMult] = useState(1);
+  const [jobs, setJobs] = useState<Record<string, number>>({});
+  const [boughtUpgrades, setBoughtUpgrades] = useState<string[]>([]);
+  const [clicks, setClicks] = useState(0);
+  const [floats, setFloats] = useState<{ id: number; x: number; y: number; val: number }[]>([]);
+  const [showGoal, setShowGoal] = useState(false);
+  const [goalShown, setGoalShown] = useState(false);
+  const floatId = useRef(0);
+  const prevTotalRef = useRef(0);
+
+  // Load save
+  useEffect(() => {
+    const s = loadSave();
+    setMoney(s.money);
+    setTotalEarned(s.totalEarned);
+    setClickMult(s.clickMult);
+    setJobs(s.jobs);
+    setBoughtUpgrades(s.boughtUpgrades);
+    prevTotalRef.current = s.totalEarned;
+    if (s.totalEarned >= GOAL) setGoalShown(true);
+  }, []);
+
+  // Auto-save every 5s
+  useEffect(() => {
+    const t = setInterval(() => {
+      setMoney(m => {
+        setTotalEarned(te => {
+          localStorage.setItem(SAVE_KEY, JSON.stringify({
+            money: m, totalEarned: te, clickMult, jobs, boughtUpgrades
+          }));
+          return te;
+        });
+        return m;
+      });
+    }, 5000);
+    return () => clearInterval(t);
+  }, [clickMult, jobs, boughtUpgrades]);
+
+  // Income per second
+  const incomePerSec = JOBS.reduce((sum, job) => {
+    const cnt = jobs[job.id] || 0;
+    return sum + job.baseIncome * cnt;
+  }, 0);
+
+  // Tick
+  useEffect(() => {
+    if (incomePerSec === 0) return;
+    const t = setInterval(() => {
+      const gain = incomePerSec / 20;
+      setMoney(m => m + gain);
+      setTotalEarned(te => te + gain);
+    }, 50);
+    return () => clearInterval(t);
+  }, [incomePerSec]);
+
+  // Goal check
+  useEffect(() => {
+    if (!goalShown && totalEarned >= GOAL) {
+      setShowGoal(true);
+      setGoalShown(true);
+    }
+  }, [totalEarned, goalShown]);
+
+  const handleClick = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+    const val = clickMult;
+    setMoney(m => m + val);
+    setTotalEarned(te => te + val);
+    setClicks(c => c + 1);
+    const rect = e.currentTarget.getBoundingClientRect();
+    const id = floatId.current++;
+    setFloats(f => [...f, {
+      id, x: e.clientX - rect.left, y: e.clientY - rect.top, val
+    }]);
+    setTimeout(() => setFloats(f => f.filter(x => x.id !== id)), 800);
+  }, [clickMult]);
+
+  const jobCost = (jobId: string, base: number) => {
+    const cnt = jobs[jobId] || 0;
+    return Math.floor(base * Math.pow(1.15, cnt));
+  };
+
+  const buyJob = (job: typeof JOBS[number]) => {
+    const cost = jobCost(job.id, job.baseCost);
+    if (money < cost) return;
+    setMoney(m => m - cost);
+    setJobs(j => ({ ...j, [job.id]: (j[job.id] || 0) + 1 }));
+  };
+
+  const buyUpgrade = (u: typeof CLICK_VALUE_UPGRADES[number]) => {
+    if (money < u.cost || boughtUpgrades.includes(u.id)) return;
+    setMoney(m => m - u.cost);
+    setClickMult(c => c * u.mult);
+    setBoughtUpgrades(b => [...b, u.id]);
+  };
+
+  const resetGame = () => {
+    localStorage.removeItem(SAVE_KEY);
+    setMoney(0); setTotalEarned(0); setClickMult(1);
+    setJobs({}); setBoughtUpgrades([]); setGoalShown(false); setShowGoal(false);
+  };
+
+  const shareToX = () => {
+    const totalJobs = Object.values(jobs).reduce((a, b) => a + b, 0);
+    const text = `副業クリッカーで月収${fmt(incomePerSec * 86400 * 30)}達成！\n副業${totalJobs}種類を掛け持ち中💰\n#副業クリッカー #副業 #月収100万\nhttps://fukugyo-clicker.vercel.app`;
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, "_blank");
+  };
+
+  const progress = Math.min(100, (totalEarned / GOAL) * 100);
+  const monthlyIncome = incomePerSec * 86400 * 30;
 
   return (
-    <main className="min-h-screen bg-slate-900 text-white">
-      {/* Hero */}
-      <section className="max-w-4xl mx-auto px-4 py-20 text-center">
-        <div className="inline-block bg-amber-500 text-white text-sm font-bold px-4 py-1 rounded-full mb-6">
-          AI × 副業診断
-        </div>
-        <h1 className="text-4xl md:text-5xl font-black mb-6 leading-tight">
-          あなたに合った副業、<br />
-          <span className="text-amber-400">AIが診断</span>
-        </h1>
-        <p className="text-xl text-slate-300 mb-8 max-w-2xl mx-auto">
-          スキル・時間・目標金額を入力するだけで、最適な副業ロードマップを生成。
-          競合調査・収益化ステップ・SNS集客戦略まで完全自動生成します。
-        </p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-          <Link
-            href="/tool"
-            className="bg-amber-500 hover:bg-amber-600 text-white font-bold py-4 px-8 rounded-xl text-lg transition-all"
-          >
-            無料で試す（3回）
-          </Link>
-          <button
-            onClick={startCheckout}
-            disabled={loading}
-            className="bg-white text-slate-900 hover:bg-slate-100 font-bold py-4 px-8 rounded-xl text-lg transition-all disabled:opacity-50"
-          >
-            {loading ? "処理中..." : "¥980/月で無制限に使う"}
-          </button>
-        </div>
-        <p className="text-slate-400 text-sm">クレジットカード不要で3回無料 • いつでもキャンセル可能</p>
-      </section>
-
-      {/* Features */}
-      <section className="max-w-5xl mx-auto px-4 py-16">
-        <h2 className="text-3xl font-black text-center mb-12">こんなことができます</h2>
-        <div className="grid md:grid-cols-3 gap-6">
-          {[
-            {
-              icon: "🎯",
-              title: "あなたに最適な副業を診断",
-              desc: "スキルと使える時間から、最もROIの高い副業を3つ提案。月収見込みと理由も明示します。",
-            },
-            {
-              icon: "📅",
-              title: "30日間ロードマップ",
-              desc: "今日から始められる具体的なアクションプラン。Week 1から4まで何をすべきかが明確になります。",
-            },
-            {
-              icon: "💰",
-              title: "収益化戦略まで自動生成",
-              desc: "適切な単価設定・最初のクライアント獲得方法・月の目標達成戦略まで一気通貫で生成。",
-            },
-          ].map((f) => (
-            <div key={f.title} className="bg-slate-800 rounded-2xl p-6">
-              <div className="text-4xl mb-4">{f.icon}</div>
-              <h3 className="text-xl font-bold mb-2">{f.title}</h3>
-              <p className="text-slate-300">{f.desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Social proof */}
-      <section className="max-w-4xl mx-auto px-4 py-16">
-        <h2 className="text-3xl font-black text-center mb-4">副業AIを使うメリット</h2>
-        <p className="text-slate-400 text-center mb-10">AIを使って副業をしている人は、使っていない人の<span className="text-amber-400 font-bold">1.84倍の収入</span>を得ています</p>
-        <div className="grid md:grid-cols-2 gap-4">
-          {[
-            { stat: "3回", desc: "無料で診断できます" },
-            { stat: "4タブ", desc: "副業診断・ロードマップ・収益化・SNS戦略" },
-            { stat: "2分", desc: "入力から診断結果まで" },
-            { stat: "¥980", desc: "月額。弁護士や副業スクールより圧倒的に安い" },
-          ].map((s) => (
-            <div key={s.stat} className="bg-slate-800 rounded-xl p-5 flex items-center gap-4">
-              <div className="text-3xl font-black text-amber-400">{s.stat}</div>
-              <div className="text-slate-300">{s.desc}</div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Pricing */}
-      <section className="max-w-4xl mx-auto px-4 py-16 text-center">
-        <h2 className="text-3xl font-black mb-12">シンプルな料金体系</h2>
-        <div className="grid md:grid-cols-2 gap-6 max-w-2xl mx-auto">
-          <div className="bg-slate-800 rounded-2xl p-8 border border-slate-700">
-            <h3 className="text-xl font-bold mb-2">無料プラン</h3>
-            <div className="text-4xl font-black mb-4">¥0</div>
-            <ul className="text-slate-300 space-y-2 mb-6 text-left">
-              <li>✓ 3回まで無料</li>
-              <li>✓ 4タブ診断結果</li>
-              <li>✗ 回数制限あり</li>
-            </ul>
-            <Link href="/tool" className="block bg-slate-700 hover:bg-slate-600 font-bold py-3 px-6 rounded-xl transition-all">
-              無料で試す
-            </Link>
-          </div>
-          <div className="bg-amber-500 rounded-2xl p-8">
-            <div className="inline-block bg-white text-amber-600 text-xs font-black px-3 py-1 rounded-full mb-3">おすすめ</div>
-            <h3 className="text-xl font-bold mb-2">プレミアム</h3>
-            <div className="text-4xl font-black mb-4">¥980<span className="text-lg font-normal">/月</span></div>
-            <ul className="space-y-2 mb-6 text-left">
-              <li>✓ 無制限に診断できる</li>
-              <li>✓ 4タブ詳細結果</li>
-              <li>✓ いつでもキャンセル</li>
-            </ul>
-            <button
-              onClick={startCheckout}
-              disabled={loading}
-              className="w-full bg-white text-amber-600 hover:bg-amber-50 font-bold py-3 px-6 rounded-xl transition-all disabled:opacity-50"
-            >
-              {loading ? "処理中..." : "今すぐ始める"}
+    <div className="min-h-screen bg-slate-900 text-white select-none">
+      {/* Goal Achievement Modal */}
+      {showGoal && (
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+          <div className="bg-gradient-to-br from-yellow-400 to-orange-500 rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl">
+            <div className="text-6xl mb-4">🎉</div>
+            <h2 className="text-2xl font-black text-white mb-2">月収¥100万達成！</h2>
+            <p className="text-white/90 text-sm mb-6">あなたは真の副業マスターになりました！</p>
+            <button onClick={shareToX}
+              className="w-full bg-black text-white font-bold py-3 rounded-xl mb-3 hover:bg-gray-800">
+              X（Twitter）でシェアする
+            </button>
+            <button onClick={() => setShowGoal(false)}
+              className="w-full bg-white/20 text-white font-bold py-3 rounded-xl hover:bg-white/30">
+              続けてプレイ
             </button>
           </div>
         </div>
-      </section>
+      )}
 
-      {/* Footer */}
-      <footer className="border-t border-slate-800 py-8 text-center text-slate-500 text-sm">
-        <div className="flex justify-center gap-6 mb-4">
-          <Link href="/legal" className="hover:text-white">特定商取引法</Link>
-          <Link href="/privacy" className="hover:text-white">プライバシーポリシー</Link>
-          <Link href="/terms" className="hover:text-white">利用規約</Link>
+      {/* Header */}
+      <header className="bg-slate-800 border-b border-slate-700 px-4 py-3">
+        <div className="max-w-4xl mx-auto flex items-center justify-between">
+          <span className="font-black text-yellow-400 text-lg">💰 副業クリッカー</span>
+          <div className="text-right">
+            <div className="text-xs text-slate-400">累計収益</div>
+            <div className="font-bold text-yellow-400">{fmt(totalEarned)}</div>
+          </div>
         </div>
-        <p>© 2025 AI副業アドバイザー</p>
-      </footer>
-    </main>
+      </header>
+
+      <div className="max-w-4xl mx-auto px-4 py-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Left: Click Area */}
+        <div className="flex flex-col gap-4">
+          {/* Stats */}
+          <div className="bg-slate-800 rounded-2xl p-4 grid grid-cols-3 gap-3 text-center">
+            <div>
+              <div className="text-xs text-slate-400">所持金</div>
+              <div className="font-bold text-green-400 text-sm">{fmt(money)}</div>
+            </div>
+            <div>
+              <div className="text-xs text-slate-400">月収</div>
+              <div className="font-bold text-blue-400 text-sm">{fmt(monthlyIncome)}</div>
+            </div>
+            <div>
+              <div className="text-xs text-slate-400">クリック値</div>
+              <div className="font-bold text-purple-400 text-sm">¥{clickMult}/回</div>
+            </div>
+          </div>
+
+          {/* Progress Bar */}
+          <div className="bg-slate-800 rounded-2xl p-4">
+            <div className="flex justify-between text-xs text-slate-400 mb-2">
+              <span>月収¥100万達成まで</span>
+              <span>{progress.toFixed(1)}%</span>
+            </div>
+            <div className="bg-slate-700 rounded-full h-3">
+              <div className="bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full h-3 transition-all duration-300"
+                style={{ width: `${progress}%` }} />
+            </div>
+          </div>
+
+          {/* Click Button */}
+          <div className="relative flex justify-center">
+            <button onClick={handleClick}
+              className="relative w-48 h-48 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 shadow-2xl hover:scale-105 active:scale-95 transition-transform flex flex-col items-center justify-center">
+              <span className="text-5xl">💰</span>
+              <span className="font-black text-white text-sm mt-1">クリック！</span>
+              <span className="text-white/80 text-xs">¥{clickMult}/回</span>
+              {floats.map(f => (
+                <span key={f.id}
+                  className="absolute text-yellow-300 font-black text-sm pointer-events-none animate-bounce"
+                  style={{ left: f.x, top: f.y, transform: "translate(-50%,-100%)" }}>
+                  +¥{f.val}
+                </span>
+              ))}
+            </button>
+          </div>
+
+          {/* Click Upgrades */}
+          <div className="bg-slate-800 rounded-2xl p-4">
+            <h3 className="font-bold text-sm text-slate-300 mb-3">スキルアップグレード</h3>
+            <div className="space-y-2">
+              {CLICK_VALUE_UPGRADES.map(u => {
+                const bought = boughtUpgrades.includes(u.id);
+                const canAfford = money >= u.cost;
+                return (
+                  <button key={u.id} onClick={() => buyUpgrade(u)} disabled={bought || !canAfford}
+                    className={`w-full flex items-center gap-3 p-2 rounded-xl text-left transition-colors ${bought ? "bg-green-900/30 opacity-50 cursor-default" : canAfford ? "bg-slate-700 hover:bg-slate-600" : "bg-slate-700/50 opacity-40 cursor-default"}`}>
+                    <span className="text-2xl">{u.icon}</span>
+                    <div className="flex-1">
+                      <div className="text-sm font-medium">{u.name}</div>
+                      <div className="text-xs text-slate-400">{u.desc}</div>
+                    </div>
+                    <div className={`text-xs font-bold ${bought ? "text-green-400" : canAfford ? "text-yellow-400" : "text-slate-500"}`}>
+                      {bought ? "取得済" : fmt(u.cost)}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* Right: Jobs */}
+        <div className="flex flex-col gap-4">
+          <div className="bg-slate-800 rounded-2xl p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-bold text-sm text-slate-300">副業一覧</h3>
+              <span className="text-xs text-slate-400">{fmt(incomePerSec)}/秒</span>
+            </div>
+            <div className="space-y-2">
+              {JOBS.map(job => {
+                const cnt = jobs[job.id] || 0;
+                const cost = jobCost(job.id, job.baseCost);
+                const canAfford = money >= cost;
+                return (
+                  <button key={job.id} onClick={() => buyJob(job)}
+                    disabled={!canAfford}
+                    className={`w-full flex items-center gap-3 p-3 rounded-xl text-left transition-colors ${canAfford ? "bg-slate-700 hover:bg-slate-600 active:scale-98" : "bg-slate-700/40 opacity-50 cursor-default"}`}>
+                    <span className="text-2xl">{job.icon}</span>
+                    <div className="flex-1">
+                      <div className="text-sm font-medium">{job.name}</div>
+                      <div className="text-xs text-slate-400">{job.desc}</div>
+                    </div>
+                    <div className="text-right">
+                      <div className={`text-xs font-bold ${canAfford ? "text-yellow-400" : "text-slate-500"}`}>{fmt(cost)}</div>
+                      {cnt > 0 && <div className="text-xs text-green-400">×{cnt}</div>}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Share & Reset */}
+          <div className="bg-slate-800 rounded-2xl p-4 space-y-2">
+            <button onClick={shareToX}
+              className="w-full bg-black text-white font-bold py-2 rounded-xl hover:bg-gray-900 text-sm">
+              X（Twitter）でスコアをシェア
+            </button>
+            <a href="https://fukugyo-advisor-ai.vercel.app"
+              target="_blank" rel="noopener noreferrer"
+              className="block w-full bg-amber-500 text-white font-bold py-2 rounded-xl hover:bg-amber-600 text-sm text-center">
+              AIで本当の副業を見つける →
+            </a>
+            <button onClick={resetGame}
+              className="w-full text-slate-500 text-xs py-1 hover:text-slate-400">
+              リセット
+            </button>
+          </div>
+
+          {/* Stats */}
+          <div className="bg-slate-800 rounded-2xl p-4 text-xs text-slate-400 space-y-1">
+            <div className="flex justify-between"><span>総クリック数</span><span className="text-white">{clicks.toLocaleString()}回</span></div>
+            <div className="flex justify-between"><span>副業種類</span><span className="text-white">{Object.keys(jobs).filter(k => (jobs[k] || 0) > 0).length}種類</span></div>
+            <div className="flex justify-between"><span>収入/時間</span><span className="text-white">{fmt(incomePerSec * 3600)}</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
