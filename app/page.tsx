@@ -406,6 +406,13 @@ export default function FukugyoClicker() {
             <div className="flex justify-between"><span>副業種類</span><span className="text-white">{Object.keys(jobs).filter(k => (jobs[k] || 0) > 0).length}種類</span></div>
             <div className="flex justify-between"><span>収入/時間</span><span className="text-white">{fmt(incomePerSec * 3600)}</span></div>
           </div>
+
+          {/* Legal Links */}
+          <div className="text-center text-xs text-slate-600 space-x-3 pb-2">
+            <a href="/legal" className="hover:text-slate-400">特定商取引法</a>
+            <span>|</span>
+            <a href="/privacy" className="hover:text-slate-400">プライバシーポリシー</a>
+          </div>
         </div>
       </div>
     </div>
