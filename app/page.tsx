@@ -2,16 +2,24 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 
 // ===== GAME DATA =====
-const JOBS = [
-  { id: "part_time", name: "コンビニバイト", icon: "🏪", baseCost: 10, baseIncome: 0.1, desc: "¥0.1/秒" },
-  { id: "freelance", name: "フリーランス案件", icon: "💻", baseCost: 100, baseIncome: 1, desc: "¥1/秒" },
-  { id: "youtube", name: "YouTubeチャンネル", icon: "🎬", baseCost: 1_000, baseIncome: 8, desc: "¥8/秒" },
-  { id: "blog", name: "アフィリエイトブログ", icon: "📝", baseCost: 8_000, baseIncome: 50, desc: "¥50/秒" },
-  { id: "ebook", name: "電子書籍出版", icon: "📚", baseCost: 50_000, baseIncome: 300, desc: "¥300/秒" },
-  { id: "saas", name: "SaaSプロダクト", icon: "⚙️", baseCost: 300_000, baseIncome: 2_000, desc: "¥2,000/秒" },
-  { id: "investment", name: "不動産投資", icon: "🏢", baseCost: 2_000_000, baseIncome: 15_000, desc: "¥15,000/秒" },
-  { id: "startup", name: "スタートアップ創業", icon: "🚀", baseCost: 15_000_000, baseIncome: 120_000, desc: "¥120,000/秒" },
+const FREE_JOBS = [
+  { id: "part_time", name: "コンビニバイト", icon: "🏪", baseCost: 10, baseIncome: 0.1, desc: "¥0.1/秒", premium: false },
+  { id: "freelance", name: "フリーランス案件", icon: "💻", baseCost: 100, baseIncome: 1, desc: "¥1/秒", premium: false },
+  { id: "youtube", name: "YouTubeチャンネル", icon: "🎬", baseCost: 1_000, baseIncome: 8, desc: "¥8/秒", premium: false },
+  { id: "blog", name: "アフィリエイトブログ", icon: "📝", baseCost: 8_000, baseIncome: 50, desc: "¥50/秒", premium: false },
+  { id: "ebook", name: "電子書籍出版", icon: "📚", baseCost: 50_000, baseIncome: 300, desc: "¥300/秒", premium: false },
+  { id: "saas", name: "SaaSプロダクト", icon: "⚙️", baseCost: 300_000, baseIncome: 2_000, desc: "¥2,000/秒", premium: false },
+  { id: "investment", name: "不動産投資", icon: "🏢", baseCost: 2_000_000, baseIncome: 15_000, desc: "¥15,000/秒", premium: false },
+  { id: "startup", name: "スタートアップ創業", icon: "🚀", baseCost: 15_000_000, baseIncome: 120_000, desc: "¥120,000/秒", premium: false },
 ] as const;
+
+const PREMIUM_JOBS = [
+  { id: "ai_consulting", name: "AIコンサルタント", icon: "🤖", baseCost: 100_000_000, baseIncome: 800_000, desc: "¥800,000/秒", premium: true },
+  { id: "crypto", name: "暗号資産運用", icon: "₿", baseCost: 500_000_000, baseIncome: 5_000_000, desc: "¥5,000,000/秒", premium: true },
+  { id: "global_ip", name: "海外IPライセンス", icon: "🌍", baseCost: 2_000_000_000, baseIncome: 30_000_000, desc: "¥30,000,000/秒", premium: true },
+] as const;
+
+const JOBS = [...FREE_JOBS, ...PREMIUM_JOBS] as const;
 
 type JobId = typeof JOBS[number]["id"];
 
@@ -23,6 +31,11 @@ const CLICK_VALUE_UPGRADES = [
 ] as const;
 
 const GOAL = 1_000_000;
+const PREMIUM_SAVE_KEY = "fukugyo_premium";
+
+function isPremiumUser(): boolean {
+  try { return localStorage.getItem(PREMIUM_SAVE_KEY) === "1"; } catch { return false; }
+}
 
 function fmt(n: number): string {
   if (n >= 1_000_000_000) return `¥${(n / 1_000_000_000).toFixed(1)}億`;
@@ -60,6 +73,8 @@ export default function FukugyoClicker() {
   const [floats, setFloats] = useState<{ id: number; x: number; y: number; val: number }[]>([]);
   const [showGoal, setShowGoal] = useState(false);
   const [goalShown, setGoalShown] = useState(false);
+  const [isPremium, setIsPremium] = useState(false);
+  const [showPremiumModal, setShowPremiumModal] = useState(false);
   const floatId = useRef(0);
   const prevTotalRef = useRef(0);
 
@@ -73,6 +88,7 @@ export default function FukugyoClicker() {
     setBoughtUpgrades(s.boughtUpgrades);
     prevTotalRef.current = s.totalEarned;
     if (s.totalEarned >= GOAL) setGoalShown(true);
+    setIsPremium(isPremiumUser());
   }, []);
 
   // Auto-save every 5s
@@ -154,6 +170,13 @@ export default function FukugyoClicker() {
     setJobs({}); setBoughtUpgrades([]); setGoalShown(false); setShowGoal(false);
   };
 
+  // PAY.JP登録後にここを実決済フローに差し替える
+  const handlePremiumPurchase = () => {
+    localStorage.setItem(PREMIUM_SAVE_KEY, "1");
+    setIsPremium(true);
+    setShowPremiumModal(false);
+  };
+
   const shareToX = () => {
     const totalJobs = Object.values(jobs).reduce((a, b) => a + b, 0);
     const text = `副業クリッカーで月収${fmt(incomePerSec * 86400 * 30)}達成！\n副業${totalJobs}種類を掛け持ち中💰\n#副業クリッカー #副業 #月収100万\nhttps://fukugyo-clicker.vercel.app`;
@@ -165,6 +188,38 @@ export default function FukugyoClicker() {
 
   return (
     <div className="min-h-screen bg-slate-900 text-white select-none">
+      {/* Premium Modal */}
+      {showPremiumModal && (
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+          <div className="bg-gradient-to-br from-purple-900 to-indigo-900 border border-purple-500 rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl">
+            <div className="text-5xl mb-3">👑</div>
+            <h2 className="text-xl font-black text-white mb-1">プレミアム解放</h2>
+            <p className="text-purple-300 text-xs mb-4">超高収益の3つの副業をアンロック</p>
+            <ul className="text-left text-sm space-y-2 mb-6">
+              {PREMIUM_JOBS.map(j => (
+                <li key={j.id} className="flex items-center gap-2 text-purple-100">
+                  <span>{j.icon}</span>
+                  <span className="font-medium">{j.name}</span>
+                  <span className="text-purple-400 text-xs ml-auto">{j.desc}</span>
+                </li>
+              ))}
+            </ul>
+            <div className="bg-purple-800/50 rounded-xl p-3 mb-5">
+              <div className="text-yellow-400 font-black text-2xl">¥500<span className="text-sm font-normal text-purple-300">/月</span></div>
+              <div className="text-purple-400 text-xs mt-1">※ PAY.JP決済（近日対応予定）</div>
+            </div>
+            <button onClick={handlePremiumPurchase}
+              className="w-full bg-gradient-to-r from-yellow-400 to-orange-500 text-white font-black py-3 rounded-xl mb-3 hover:opacity-90 text-sm">
+              今すぐ解放する（無料お試し中）
+            </button>
+            <button onClick={() => setShowPremiumModal(false)}
+              className="w-full text-purple-400 text-xs py-2 hover:text-purple-300">
+              閉じる
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Goal Achievement Modal */}
       {showGoal && (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
@@ -280,6 +335,20 @@ export default function FukugyoClicker() {
                 const cnt = jobs[job.id] || 0;
                 const cost = jobCost(job.id, job.baseCost);
                 const canAfford = money >= cost;
+                const locked = job.premium && !isPremium;
+                if (locked) {
+                  return (
+                    <button key={job.id} onClick={() => setShowPremiumModal(true)}
+                      className="w-full flex items-center gap-3 p-3 rounded-xl text-left bg-purple-900/30 border border-purple-800/50 hover:bg-purple-900/50 transition-colors">
+                      <span className="text-2xl grayscale opacity-60">{job.icon}</span>
+                      <div className="flex-1">
+                        <div className="text-sm font-medium text-purple-400">🔒 {job.name}</div>
+                        <div className="text-xs text-purple-600">{job.desc}</div>
+                      </div>
+                      <div className="text-xs font-bold text-purple-500">👑 PRO</div>
+                    </button>
+                  );
+                }
                 return (
                   <button key={job.id} onClick={() => buyJob(job)}
                     disabled={!canAfford}
@@ -298,6 +367,21 @@ export default function FukugyoClicker() {
               })}
             </div>
           </div>
+
+          {/* Premium Banner */}
+          {!isPremium && (
+            <button onClick={() => setShowPremiumModal(true)}
+              className="w-full bg-gradient-to-r from-purple-900 to-indigo-900 border border-purple-700 rounded-2xl p-4 text-left hover:border-purple-500 transition-colors">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">👑</span>
+                <div>
+                  <div className="text-sm font-bold text-purple-200">プレミアム解放 ¥500/月</div>
+                  <div className="text-xs text-purple-400">AIコンサル・暗号資産・海外IPをアンロック</div>
+                </div>
+                <span className="ml-auto text-purple-400 text-xs">→</span>
+              </div>
+            </button>
+          )}
 
           {/* Share & Reset */}
           <div className="bg-slate-800 rounded-2xl p-4 space-y-2">
