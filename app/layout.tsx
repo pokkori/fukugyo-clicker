@@ -26,9 +26,31 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
 };
 
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "VideoGame",
+  "name": "副業クリッカー",
+  "description": "サラリーマンから起業家へ。クリックして副業を積み上げ、月収¥100万を目指すクリッカーゲーム。",
+  "url": "https://fukugyo-clicker.vercel.app",
+  "genre": ["Clicker", "Idle"],
+  "applicationCategory": "Game",
+  "operatingSystem": "Web",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "JPY"
+  },
+};
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ja">
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      </head>
       <body>{children}</body>
     </html>
   );
