@@ -203,7 +203,8 @@ export default function FukugyoClicker() {
       {/* Premium Modal */}
       {showPremiumModal && (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
-          <div className="bg-gradient-to-br from-purple-900 to-indigo-900 border border-purple-500 rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl">
+          <div className="border border-purple-500 rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl"
+            style={{ background: "linear-gradient(135deg, rgba(88,28,135,0.95), rgba(49,46,129,0.95))", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)" }}>
             <div className="text-5xl mb-3">👑</div>
             <h2 className="text-xl font-black text-white mb-1">プレミアム解放</h2>
             <p className="text-purple-300 text-xs mb-4">超高収益の3つの副業をアンロック</p>
@@ -256,7 +257,8 @@ export default function FukugyoClicker() {
       )}
 
       {/* Header */}
-      <header className="bg-slate-800 border-b border-slate-700 px-4 py-3">
+      <header className="border-b border-slate-700 px-4 py-3"
+        style={{ background: "rgba(30,41,59,0.85)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <span className="font-black text-yellow-400 text-lg">副業クリッカー</span>
           <div className="flex items-center gap-3">
@@ -290,7 +292,8 @@ export default function FukugyoClicker() {
         {/* Left: Click Area */}
         <div className="flex flex-col gap-4">
           {/* Stats */}
-          <div className="bg-slate-800 rounded-2xl p-4 grid grid-cols-3 gap-3 text-center">
+          <div className="rounded-2xl p-4 grid grid-cols-3 gap-3 text-center"
+            style={{ background: "rgba(30,41,59,0.85)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
             <div>
               <div className="text-xs text-slate-400">所持金</div>
               <div className="font-bold text-green-400 text-sm">{fmt(money)}</div>
@@ -306,7 +309,8 @@ export default function FukugyoClicker() {
           </div>
 
           {/* Progress Bar */}
-          <div className="bg-slate-800 rounded-2xl p-4">
+          <div className="rounded-2xl p-4"
+            style={{ background: "rgba(30,41,59,0.85)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
             <div className="flex justify-between text-xs text-slate-400 mb-2">
               <span>月収¥100万達成まで</span>
               <span>{progress.toFixed(1)}%</span>
@@ -337,7 +341,8 @@ export default function FukugyoClicker() {
           </div>
 
           {/* Click Upgrades */}
-          <div className="bg-slate-800 rounded-2xl p-4">
+          <div className="rounded-2xl p-4"
+            style={{ background: "rgba(30,41,59,0.85)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
             <h3 className="font-bold text-sm text-slate-300 mb-3">スキルアップグレード</h3>
             <div className="space-y-2">
               {CLICK_VALUE_UPGRADES.map(u => {
@@ -364,7 +369,8 @@ export default function FukugyoClicker() {
 
         {/* Right: Jobs */}
         <div className="flex flex-col gap-4">
-          <div className="bg-slate-800 rounded-2xl p-4">
+          <div className="rounded-2xl p-4"
+            style={{ background: "rgba(30,41,59,0.85)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-bold text-sm text-slate-300">副業一覧</h3>
               <span className="text-xs text-slate-400">{fmt(incomePerSec)}/秒</span>
@@ -426,7 +432,8 @@ export default function FukugyoClicker() {
           )}
 
           {/* Share & Reset */}
-          <div className="bg-slate-800 rounded-2xl p-4 space-y-2">
+          <div className="rounded-2xl p-4 space-y-2"
+            style={{ background: "rgba(30,41,59,0.85)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
             <button onClick={shareToX}
               aria-label="副業クリッカーの記録をXにシェアする"
               className="w-full bg-black text-white font-bold py-2 rounded-xl hover:bg-gray-900 text-sm min-h-[44px]">
@@ -445,7 +452,8 @@ export default function FukugyoClicker() {
           </div>
 
           {/* Stats */}
-          <div className="bg-slate-800 rounded-2xl p-4 text-xs text-slate-400 space-y-1">
+          <div className="rounded-2xl p-4 text-xs text-slate-400 space-y-1"
+            style={{ background: "rgba(30,41,59,0.85)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
             <div className="flex justify-between"><span>総クリック数</span><span className="text-white">{clicks.toLocaleString()}回</span></div>
             <div className="flex justify-between"><span>副業種類</span><span className="text-white">{Object.keys(jobs).filter(k => (jobs[k] || 0) > 0).length}種類</span></div>
             <div className="flex justify-between"><span>収入/時間</span><span className="text-white">{fmt(incomePerSec * 3600)}</span></div>
