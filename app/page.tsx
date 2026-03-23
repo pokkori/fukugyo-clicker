@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback, useRef } from "react";
+import { updateStreak, loadStreak, getStreakMilestoneMessage, type StreakData } from "@/lib/streak";
 
 // ===== GAME DATA =====
 const FREE_JOBS = [
@@ -75,6 +76,8 @@ export default function FukugyoClicker() {
   const [goalShown, setGoalShown] = useState(false);
   const [isPremium, setIsPremium] = useState(false);
   const [showPremiumModal, setShowPremiumModal] = useState(false);
+  const [streak, setStreak] = useState<StreakData | null>(null);
+  const [streakMsg, setStreakMsg] = useState<string | null>(null);
   const floatId = useRef(0);
   const prevTotalRef = useRef(0);
 
@@ -89,6 +92,7 @@ export default function FukugyoClicker() {
     prevTotalRef.current = s.totalEarned;
     if (s.totalEarned >= GOAL) setGoalShown(true);
     setIsPremium(isPremiumUser());
+    setStreak(loadStreak("fukugyou"));
   }, []);
 
   // Auto-save every 5s
@@ -136,7 +140,15 @@ export default function FukugyoClicker() {
     const val = clickMult;
     setMoney(m => m + val);
     setTotalEarned(te => te + val);
-    setClicks(c => c + 1);
+    setClicks(c => {
+      if (c === 0) {
+        const s = updateStreak("fukugyou");
+        setStreak(s);
+        const msg = getStreakMilestoneMessage(s.count);
+        if (msg) setStreakMsg(msg);
+      }
+      return c + 1;
+    });
     const rect = e.currentTarget.getBoundingClientRect();
     const id = floatId.current++;
     setFloats(f => [...f, {
@@ -246,12 +258,32 @@ export default function FukugyoClicker() {
       {/* Header */}
       <header className="bg-slate-800 border-b border-slate-700 px-4 py-3">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <span className="font-black text-yellow-400 text-lg">💰 副業クリッカー</span>
-          <div className="text-right">
-            <div className="text-xs text-slate-400">累計収益</div>
-            <div className="font-bold text-yellow-400">{fmt(totalEarned)}</div>
+          <span className="font-black text-yellow-400 text-lg">副業クリッカー</span>
+          <div className="flex items-center gap-3">
+            {streak && streak.count > 0 && (
+              <div
+                className="flex items-center gap-1 bg-orange-500/20 border border-orange-500/40 rounded-full px-3 py-1"
+                aria-label={`${streak.count}日連続プレイ中`}
+                title={`${streak.count}日連続プレイ中`}
+              >
+                <span className="text-orange-400 text-xs font-bold" aria-hidden="true">STREAK</span>
+                <span className="text-orange-300 font-black text-sm">{streak.count}</span>
+                <span className="text-orange-400 text-xs">日</span>
+              </div>
+            )}
+            <div className="text-right">
+              <div className="text-xs text-slate-400">累計収益</div>
+              <div className="font-bold text-yellow-400">{fmt(totalEarned)}</div>
+            </div>
           </div>
         </div>
+        {streakMsg && (
+          <div className="max-w-4xl mx-auto mt-2">
+            <div className="bg-orange-500/20 border border-orange-500/40 rounded-xl px-4 py-2 text-orange-300 text-sm text-center font-bold">
+              {streakMsg}
+            </div>
+          </div>
+        )}
       </header>
 
       <div className="max-w-4xl mx-auto px-4 py-4 grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -313,6 +345,7 @@ export default function FukugyoClicker() {
                 const canAfford = money >= u.cost;
                 return (
                   <button key={u.id} onClick={() => buyUpgrade(u)} disabled={bought || !canAfford}
+                    aria-label={bought ? `${u.name}は取得済み` : `${u.name}を${fmt(u.cost)}で購入する（${u.desc}）`}
                     className={`w-full flex items-center gap-3 p-2 rounded-xl text-left transition-colors ${bought ? "bg-green-900/30 opacity-50 cursor-default" : canAfford ? "bg-slate-700 hover:bg-slate-600" : "bg-slate-700/50 opacity-40 cursor-default"}`}>
                     <span className="text-2xl">{u.icon}</span>
                     <div className="flex-1">
@@ -345,6 +378,7 @@ export default function FukugyoClicker() {
                 if (locked) {
                   return (
                     <button key={job.id} onClick={() => setShowPremiumModal(true)}
+                      aria-label={`${job.name}はプレミアム限定です。プレミアムプランに登録してアンロックする`}
                       className="w-full flex items-center gap-3 p-3 rounded-xl text-left bg-purple-900/30 border border-purple-800/50 hover:bg-purple-900/50 transition-colors">
                       <span className="text-2xl grayscale opacity-60">{job.icon}</span>
                       <div className="flex-1">
@@ -358,6 +392,7 @@ export default function FukugyoClicker() {
                 return (
                   <button key={job.id} onClick={() => buyJob(job)}
                     disabled={!canAfford}
+                    aria-label={`${job.name}を${fmt(jobCost(job.id, job.baseCost))}で購入する（${job.desc}）`}
                     className={`w-full flex items-center gap-3 p-3 rounded-xl text-left transition-colors ${canAfford ? "bg-slate-700 hover:bg-slate-600 active:scale-98" : "bg-slate-700/40 opacity-50 cursor-default"}`}>
                     <span className="text-2xl">{job.icon}</span>
                     <div className="flex-1">
@@ -377,6 +412,7 @@ export default function FukugyoClicker() {
           {/* Premium Banner */}
           {!isPremium && (
             <button onClick={() => setShowPremiumModal(true)}
+              aria-label="プレミアムプランを月額500円で解放する。AIコンサルタント・暗号資産運用・海外IPライセンスがアンロック"
               className="w-full bg-gradient-to-r from-purple-900 to-indigo-900 border border-purple-700 rounded-2xl p-4 text-left hover:border-purple-500 transition-colors">
               <div className="flex items-center gap-2">
                 <span className="text-xl">👑</span>
@@ -392,7 +428,8 @@ export default function FukugyoClicker() {
           {/* Share & Reset */}
           <div className="bg-slate-800 rounded-2xl p-4 space-y-2">
             <button onClick={shareToX}
-              className="w-full bg-black text-white font-bold py-2 rounded-xl hover:bg-gray-900 text-sm">
+              aria-label="副業クリッカーの記録をXにシェアする"
+              className="w-full bg-black text-white font-bold py-2 rounded-xl hover:bg-gray-900 text-sm min-h-[44px]">
               X（Twitter）でスコアをシェア
             </button>
             <a href="https://fukugyo-advisor-ai.vercel.app"
@@ -401,7 +438,8 @@ export default function FukugyoClicker() {
               AIで本当の副業を見つける →
             </a>
             <button onClick={resetGame}
-              className="w-full text-slate-500 text-xs py-1 hover:text-slate-400">
+              aria-label="ゲームの進行状況をリセットしてはじめからやり直す"
+              className="w-full text-slate-500 text-xs py-1 hover:text-slate-400 min-h-[44px]">
               リセット
             </button>
           </div>
