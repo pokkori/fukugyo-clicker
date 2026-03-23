@@ -209,11 +209,13 @@ export default function FukugyoClicker() {
               <div className="text-purple-400 text-xs mt-1">※ PAY.JP決済（近日対応予定）</div>
             </div>
             <button onClick={handlePremiumPurchase}
-              className="w-full bg-gradient-to-r from-yellow-400 to-orange-500 text-white font-black py-3 rounded-xl mb-3 hover:opacity-90 text-sm">
+              className="w-full bg-gradient-to-r from-yellow-400 to-orange-500 text-white font-black py-3 rounded-xl mb-3 hover:opacity-90 text-sm min-h-[44px]"
+              aria-label="プレミアムプランを今すぐ購入してすべての副業を解放する">
               今すぐ解放する（無料お試し中）
             </button>
             <button onClick={() => setShowPremiumModal(false)}
-              className="w-full text-purple-400 text-xs py-2 hover:text-purple-300">
+              className="w-full text-purple-400 text-xs py-2 hover:text-purple-300 min-h-[44px]"
+              aria-label="プレミアムモーダルを閉じる">
               閉じる
             </button>
           </div>
@@ -228,11 +230,13 @@ export default function FukugyoClicker() {
             <h2 className="text-2xl font-black text-white mb-2">月収¥100万達成！</h2>
             <p className="text-white/90 text-sm mb-6">あなたは真の副業マスターになりました！</p>
             <button onClick={shareToX}
-              className="w-full bg-black text-white font-bold py-3 rounded-xl mb-3 hover:bg-gray-800">
+              className="w-full bg-black text-white font-bold py-3 rounded-xl mb-3 hover:bg-gray-800 min-h-[44px]"
+              aria-label="月収100万円達成をXでシェアする">
               X（Twitter）でシェアする
             </button>
             <button onClick={() => setShowGoal(false)}
-              className="w-full bg-white/20 text-white font-bold py-3 rounded-xl hover:bg-white/30">
+              className="w-full bg-white/20 text-white font-bold py-3 rounded-xl hover:bg-white/30 min-h-[44px]"
+              aria-label="目標達成モーダルを閉じてプレイを続ける">
               続けてプレイ
             </button>
           </div>
@@ -284,8 +288,10 @@ export default function FukugyoClicker() {
           {/* Click Button */}
           <div className="relative flex justify-center">
             <button onClick={handleClick}
-              className="relative w-48 h-48 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 shadow-2xl hover:scale-105 active:scale-95 transition-transform flex flex-col items-center justify-center">
-              <span className="text-5xl">💰</span>
+              className="relative w-48 h-48 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 shadow-2xl hover:scale-105 active:scale-95 transition-transform flex flex-col items-center justify-center"
+              aria-label={`クリックして¥${clickMult}稼ぐ`}
+              type="button">
+              <span className="text-5xl" aria-hidden="true">お金</span>
               <span className="font-black text-white text-sm mt-1">クリック！</span>
               <span className="text-white/80 text-xs">¥{clickMult}/回</span>
               {floats.map(f => (
