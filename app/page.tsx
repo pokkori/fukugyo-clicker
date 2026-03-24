@@ -47,6 +47,9 @@ function fmt(n: number): string {
 }
 
 const SAVE_KEY = "fukugyo_save_v2";
+const LAST_ACTIVE_KEY = "fukugyo_last_active";
+// オフライン収益の上限（最大12時間分）
+const OFFLINE_MAX_SECONDS = 60 * 60 * 12;
 
 interface Save {
   money: number;
@@ -64,6 +67,30 @@ function loadSave(): Save {
   return { money: 0, totalEarned: 0, clickMult: 1, jobs: {}, boughtUpgrades: [] };
 }
 
+/** プレミアムユーザー向け：オフライン中の収益を計算して返す */
+function calcOfflineEarnings(
+  jobs: Record<string, number>,
+  isPremium: boolean
+): number {
+  if (!isPremium) return 0;
+  try {
+    const lastActive = parseInt(localStorage.getItem(LAST_ACTIVE_KEY) ?? "0", 10);
+    if (!lastActive) return 0;
+    const offlineSec = Math.min(
+      (Date.now() - lastActive) / 1000,
+      OFFLINE_MAX_SECONDS
+    );
+    if (offlineSec < 10) return 0;
+    const ips = JOBS.reduce((sum, job) => {
+      const cnt = jobs[job.id] || 0;
+      return sum + job.baseIncome * cnt;
+    }, 0);
+    return ips * offlineSec;
+  } catch {
+    return 0;
+  }
+}
+
 export default function FukugyoClicker() {
   const [money, setMoney] = useState(0);
   const [totalEarned, setTotalEarned] = useState(0);
@@ -78,24 +105,38 @@ export default function FukugyoClicker() {
   const [showPremiumModal, setShowPremiumModal] = useState(false);
   const [streak, setStreak] = useState<StreakData | null>(null);
   const [streakMsg, setStreakMsg] = useState<string | null>(null);
+  const [offlineBonus, setOfflineBonus] = useState(0);
+  const [showOfflineBonus, setShowOfflineBonus] = useState(false);
   const floatId = useRef(0);
   const prevTotalRef = useRef(0);
 
   // Load save
   useEffect(() => {
     const s = loadSave();
-    setMoney(s.money);
-    setTotalEarned(s.totalEarned);
+    const premium = isPremiumUser();
+    // オフライン収益計算（プレミアム限定）
+    const offline = calcOfflineEarnings(s.jobs, premium);
+    const moneyWithBonus = s.money + offline;
+    const totalWithBonus = s.totalEarned + offline;
+    setMoney(moneyWithBonus);
+    setTotalEarned(totalWithBonus);
     setClickMult(s.clickMult);
     setJobs(s.jobs);
     setBoughtUpgrades(s.boughtUpgrades);
-    prevTotalRef.current = s.totalEarned;
-    if (s.totalEarned >= GOAL) setGoalShown(true);
-    setIsPremium(isPremiumUser());
+    prevTotalRef.current = totalWithBonus;
+    if (totalWithBonus >= GOAL) setGoalShown(true);
+    setIsPremium(premium);
     setStreak(loadStreak("fukugyou"));
+    if (offline > 0) {
+      setOfflineBonus(offline);
+      setShowOfflineBonus(true);
+      setTimeout(() => setShowOfflineBonus(false), 5000);
+    }
+    // 最終アクティブ時間を記録
+    localStorage.setItem(LAST_ACTIVE_KEY, String(Date.now()));
   }, []);
 
-  // Auto-save every 5s
+  // Auto-save every 5s + 最終アクティブ時間更新
   useEffect(() => {
     const t = setInterval(() => {
       setMoney(m => {
@@ -107,6 +148,7 @@ export default function FukugyoClicker() {
         });
         return m;
       });
+      localStorage.setItem(LAST_ACTIVE_KEY, String(Date.now()));
     }, 5000);
     return () => clearInterval(t);
   }, [clickMult, jobs, boughtUpgrades]);
@@ -217,8 +259,18 @@ export default function FukugyoClicker() {
                 </li>
               ))}
             </ul>
+            {/* オフライン収益の価値訴求 */}
+            <div className="bg-indigo-900/50 border border-indigo-700/50 rounded-xl p-3 mb-4 text-left">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-indigo-300 font-bold text-xs">オフラインでも収益が加算！</span>
+              </div>
+              <p className="text-indigo-400 text-xs leading-relaxed">
+                ゲームを閉じている間も、最大12時間分の収益が自動でたまります。翌朝開いたら一気に受け取れる！
+              </p>
+            </div>
             <div className="bg-purple-800/50 rounded-xl p-3 mb-5">
               <div className="text-yellow-400 font-black text-2xl">¥500<span className="text-sm font-normal text-purple-300">/月</span></div>
+              <div className="text-purple-300 text-sm font-bold mt-1">1日あたりたった33円で永続プレイ</div>
               <div className="text-purple-400 text-xs mt-1">※ PAY.JP決済（近日対応予定）</div>
             </div>
             <button onClick={handlePremiumPurchase}
@@ -287,6 +339,29 @@ export default function FukugyoClicker() {
           </div>
         )}
       </header>
+
+      {/* オフラインボーナス通知 */}
+      {showOfflineBonus && offlineBonus > 0 && (
+        <div className="max-w-4xl mx-auto px-4 pt-3">
+          <div
+            className="rounded-xl px-4 py-3 flex items-center gap-3 text-sm font-bold"
+            style={{ background: "rgba(99,102,241,0.2)", border: "1px solid rgba(99,102,241,0.4)" }}
+            role="status"
+            aria-live="polite"
+          >
+            <span className="text-indigo-300">オフライン収益</span>
+            <span className="text-yellow-300 font-black">{fmt(offlineBonus)}</span>
+            <span className="text-indigo-400 text-xs ml-auto">受け取り完了！</span>
+            <button
+              onClick={() => setShowOfflineBonus(false)}
+              className="text-indigo-500 hover:text-indigo-300 text-xs min-h-[44px] px-2"
+              aria-label="オフライン収益通知を閉じる"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="max-w-4xl mx-auto px-4 py-4 grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Left: Click Area */}
