@@ -4,20 +4,20 @@ import { updateStreak, loadStreak, getStreakMilestoneMessage, type StreakData } 
 
 // ===== GAME DATA =====
 const FREE_JOBS = [
-  { id: "part_time", name: "コンビニバイト", icon: "🏪", baseCost: 10, baseIncome: 0.1, desc: "¥0.1/秒", premium: false },
-  { id: "freelance", name: "フリーランス案件", icon: "💻", baseCost: 100, baseIncome: 1, desc: "¥1/秒", premium: false },
-  { id: "youtube", name: "YouTubeチャンネル", icon: "🎬", baseCost: 1_000, baseIncome: 8, desc: "¥8/秒", premium: false },
-  { id: "blog", name: "アフィリエイトブログ", icon: "📝", baseCost: 8_000, baseIncome: 50, desc: "¥50/秒", premium: false },
-  { id: "ebook", name: "電子書籍出版", icon: "📚", baseCost: 50_000, baseIncome: 300, desc: "¥300/秒", premium: false },
-  { id: "saas", name: "SaaSプロダクト", icon: "⚙️", baseCost: 300_000, baseIncome: 2_000, desc: "¥2,000/秒", premium: false },
-  { id: "investment", name: "不動産投資", icon: "🏢", baseCost: 2_000_000, baseIncome: 15_000, desc: "¥15,000/秒", premium: false },
-  { id: "startup", name: "スタートアップ創業", icon: "🚀", baseCost: 15_000_000, baseIncome: 120_000, desc: "¥120,000/秒", premium: false },
+  { id: "part_time", name: "コンビニバイト", icon: "", baseCost: 10, baseIncome: 0.1, desc: "¥0.1/秒", premium: false },
+  { id: "freelance", name: "フリーランス案件", icon: "", baseCost: 100, baseIncome: 1, desc: "¥1/秒", premium: false },
+  { id: "youtube", name: "YouTubeチャンネル", icon: "", baseCost: 1_000, baseIncome: 8, desc: "¥8/秒", premium: false },
+  { id: "blog", name: "アフィリエイトブログ", icon: "", baseCost: 8_000, baseIncome: 50, desc: "¥50/秒", premium: false },
+  { id: "ebook", name: "電子書籍出版", icon: "", baseCost: 50_000, baseIncome: 300, desc: "¥300/秒", premium: false },
+  { id: "saas", name: "SaaSプロダクト", icon: "️", baseCost: 300_000, baseIncome: 2_000, desc: "¥2,000/秒", premium: false },
+  { id: "investment", name: "不動産投資", icon: "", baseCost: 2_000_000, baseIncome: 15_000, desc: "¥15,000/秒", premium: false },
+  { id: "startup", name: "スタートアップ創業", icon: "", baseCost: 15_000_000, baseIncome: 120_000, desc: "¥120,000/秒", premium: false },
 ] as const;
 
 const PREMIUM_JOBS = [
-  { id: "ai_consulting", name: "AIコンサルタント", icon: "🤖", baseCost: 100_000_000, baseIncome: 800_000, desc: "¥800,000/秒", premium: true },
+  { id: "ai_consulting", name: "AIコンサルタント", icon: "", baseCost: 100_000_000, baseIncome: 800_000, desc: "¥800,000/秒", premium: true },
   { id: "crypto", name: "暗号資産運用", icon: "₿", baseCost: 500_000_000, baseIncome: 5_000_000, desc: "¥5,000,000/秒", premium: true },
-  { id: "global_ip", name: "海外IPライセンス", icon: "🌍", baseCost: 2_000_000_000, baseIncome: 30_000_000, desc: "¥30,000,000/秒", premium: true },
+  { id: "global_ip", name: "海外IPライセンス", icon: "", baseCost: 2_000_000_000, baseIncome: 30_000_000, desc: "¥30,000,000/秒", premium: true },
 ] as const;
 
 const JOBS = [...FREE_JOBS, ...PREMIUM_JOBS] as const;
@@ -25,10 +25,10 @@ const JOBS = [...FREE_JOBS, ...PREMIUM_JOBS] as const;
 type JobId = typeof JOBS[number]["id"];
 
 const CLICK_VALUE_UPGRADES = [
-  { id: "mouse1", name: "やる気UP", icon: "💪", cost: 50, mult: 2, desc: "クリック値×2" },
-  { id: "mouse2", name: "集中力MAX", icon: "🧠", cost: 500, mult: 5, desc: "クリック値×5" },
-  { id: "mouse3", name: "副業スキル習得", icon: "🎯", cost: 5_000, mult: 10, desc: "クリック値×10" },
-  { id: "mouse4", name: "経営センス覚醒", icon: "👑", cost: 100_000, mult: 50, desc: "クリック値×50" },
+  { id: "mouse1", name: "やる気UP", icon: "", cost: 50, mult: 2, desc: "クリック値×2" },
+  { id: "mouse2", name: "集中力MAX", icon: "", cost: 500, mult: 5, desc: "クリック値×5" },
+  { id: "mouse3", name: "副業スキル習得", icon: "", cost: 5_000, mult: 10, desc: "クリック値×10" },
+  { id: "mouse4", name: "経営センス覚醒", icon: "", cost: 100_000, mult: 50, desc: "クリック値×50" },
 ] as const;
 
 const GOAL = 1_000_000;
@@ -191,7 +191,7 @@ export default function FukugyoClicker() {
 
   const shareToX = () => {
     const totalJobs = Object.values(jobs).reduce((a, b) => a + b, 0);
-    const text = `副業クリッカーで月収${fmt(incomePerSec * 86400 * 30)}達成！\n副業${totalJobs}種類を掛け持ち中💰\n#副業クリッカー #副業 #月収100万\nhttps://fukugyo-clicker.vercel.app`;
+    const text = `副業クリッカーで月収${fmt(incomePerSec * 86400 * 30)}達成！\n副業${totalJobs}種類を掛け持ち中\n#副業クリッカー #副業 #月収100万\nhttps://fukugyo-advisor-ai.vercel.app`;
     window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, "_blank");
   };
 
@@ -205,7 +205,7 @@ export default function FukugyoClicker() {
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
           <div className="border border-purple-500 rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl"
             style={{ background: "linear-gradient(135deg, rgba(88,28,135,0.95), rgba(49,46,129,0.95))", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)" }}>
-            <div className="text-5xl mb-3">👑</div>
+            <div className="text-5xl mb-3"></div>
             <h2 className="text-xl font-black text-white mb-1">プレミアム解放</h2>
             <p className="text-purple-300 text-xs mb-4">超高収益の3つの副業をアンロック</p>
             <ul className="text-left text-sm space-y-2 mb-6">
@@ -239,7 +239,7 @@ export default function FukugyoClicker() {
       {showGoal && (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
           <div className="bg-gradient-to-br from-yellow-400 to-orange-500 rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl">
-            <div className="text-6xl mb-4">🎉</div>
+            <div className="text-6xl mb-4"></div>
             <h2 className="text-2xl font-black text-white mb-2">月収¥100万達成！</h2>
             <p className="text-white/90 text-sm mb-6">あなたは真の副業マスターになりました！</p>
             <button onClick={shareToX}
@@ -260,7 +260,7 @@ export default function FukugyoClicker() {
       <header className="border-b border-slate-700 px-4 py-3"
         style={{ background: "rgba(30,41,59,0.85)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
         <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <span className="font-black text-yellow-400 text-lg">副業クリッカー</span>
+          <h1 className="font-black text-yellow-400 text-lg m-0">副業クリッカー</h1>
           <div className="flex items-center gap-3">
             {streak && streak.count > 0 && (
               <div
@@ -388,10 +388,10 @@ export default function FukugyoClicker() {
                       className="w-full flex items-center gap-3 p-3 rounded-xl text-left bg-purple-900/30 border border-purple-800/50 hover:bg-purple-900/50 transition-colors">
                       <span className="text-2xl grayscale opacity-60">{job.icon}</span>
                       <div className="flex-1">
-                        <div className="text-sm font-medium text-purple-400">🔒 {job.name}</div>
+                        <div className="text-sm font-medium text-purple-400"> {job.name}</div>
                         <div className="text-xs text-purple-600">{job.desc}</div>
                       </div>
-                      <div className="text-xs font-bold text-purple-500">👑 PRO</div>
+                      <div className="text-xs font-bold text-purple-500"> PRO</div>
                     </button>
                   );
                 }
@@ -421,7 +421,7 @@ export default function FukugyoClicker() {
               aria-label="プレミアムプランを月額500円で解放する。AIコンサルタント・暗号資産運用・海外IPライセンスがアンロック"
               className="w-full bg-gradient-to-r from-purple-900 to-indigo-900 border border-purple-700 rounded-2xl p-4 text-left hover:border-purple-500 transition-colors">
               <div className="flex items-center gap-2">
-                <span className="text-xl">👑</span>
+                <span className="text-xl"></span>
                 <div>
                   <div className="text-sm font-bold text-purple-200">プレミアム解放 ¥500/月</div>
                   <div className="text-xs text-purple-400">AIコンサル・暗号資産・海外IPをアンロック</div>

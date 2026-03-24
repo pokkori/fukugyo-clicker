@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 
-const SITE_URL = "https://fukugyo-clicker.vercel.app";
+const SITE_URL = "https://fukugyo-advisor-ai.vercel.app";
 const TITLE = "副業クリッカー | クリックして月収¥100万を目指せ！";
 const DESC = "サラリーマンから起業家へ。クリックして副業を積み上げ、月収¥100万を目指すクリッカーゲーム。無料プレイ・Xでスコアシェア可能。";
 
@@ -31,7 +31,7 @@ const jsonLd = {
   "@type": "VideoGame",
   "name": "副業クリッカー",
   "description": "サラリーマンから起業家へ。クリックして副業を積み上げ、月収¥100万を目指すクリッカーゲーム。",
-  "url": "https://fukugyo-clicker.vercel.app",
+  "url": "https://fukugyo-advisor-ai.vercel.app",
   "genre": ["Clicker", "Idle"],
   "applicationCategory": "Game",
   "operatingSystem": "Web",
