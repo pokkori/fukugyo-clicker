@@ -60,6 +60,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           strategy="afterInteractive"
         />
         {children}
+        <footer className="border-t border-gray-800 py-6 text-center text-xs text-gray-500">
+          <nav className="flex gap-6 justify-center" aria-label="フッターナビゲーション">
+            <a href="/legal" aria-label="特定商取引法に基づく表記" className="hover:text-gray-300 transition-colors">特商法</a>
+            <a href="/privacy" aria-label="プライバシーポリシー" className="hover:text-gray-300 transition-colors">プライバシー</a>
+            <a href="/terms" aria-label="利用規約" className="hover:text-gray-300 transition-colors">利用規約</a>
+          </nav>
+          <p className="mt-3">&copy; 2026 ポッコリラボ</p>
+        </footer>
       </body>
     </html>
   );
