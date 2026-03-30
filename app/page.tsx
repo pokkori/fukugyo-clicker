@@ -1,23 +1,98 @@
 "use client";
-import { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { updateStreak, loadStreak, getStreakMilestoneMessage, type StreakData } from "@/lib/streak";
+
+/* --- SVG Job Icons --- */
+function JobIcon({ jobId }: { jobId: string }) {
+  const icons: Record<string, React.ReactNode> = {
+    part_time: (
+      <svg viewBox="0 0 32 32" width={28} height={28}><rect x="4" y="6" width="24" height="20" rx="3" fill="#3B82F6" /><rect x="8" y="10" width="6" height="8" rx="1" fill="#93C5FD" /><rect x="18" y="10" width="6" height="3" rx="1" fill="#FDE68A" /><rect x="18" y="16" width="6" height="3" rx="1" fill="#FDE68A" /></svg>
+    ),
+    freelance: (
+      <svg viewBox="0 0 32 32" width={28} height={28}><rect x="4" y="8" width="24" height="16" rx="2" fill="#6366F1" /><rect x="6" y="10" width="20" height="12" rx="1" fill="#312E81" /><path d="M10 15h12M10 19h8" stroke="#818CF8" strokeWidth="1.5" strokeLinecap="round" /></svg>
+    ),
+    youtube: (
+      <svg viewBox="0 0 32 32" width={28} height={28}><rect x="2" y="6" width="28" height="20" rx="6" fill="#DC2626" /><polygon points="13,10 23,16 13,22" fill="#fff" /></svg>
+    ),
+    blog: (
+      <svg viewBox="0 0 32 32" width={28} height={28}><rect x="4" y="4" width="24" height="24" rx="3" fill="#F59E0B" /><path d="M9 10h14M9 15h10M9 20h12" stroke="#78350F" strokeWidth="2" strokeLinecap="round" /></svg>
+    ),
+    ebook: (
+      <svg viewBox="0 0 32 32" width={28} height={28}><path d="M4 6c4-2 8-1 12 1 4-2 8-3 12-1v20c-4-2-8-1-12 1-4-2-8-3-12-1V6z" fill="#8B5CF6" /><path d="M16 7v20" stroke="#C4B5FD" strokeWidth="1.5" /></svg>
+    ),
+    saas: (
+      <svg viewBox="0 0 32 32" width={28} height={28}><rect x="4" y="12" width="24" height="14" rx="2" fill="#475569" /><rect x="6" y="14" width="20" height="10" rx="1" fill="#0F172A" /><rect x="8" y="4" width="16" height="10" rx="2" fill="#64748B" /><circle cx="16" cy="19" r="3" fill="#22D3EE" /></svg>
+    ),
+    investment: (
+      <svg viewBox="0 0 32 32" width={28} height={28}><rect x="6" y="10" width="20" height="16" rx="2" fill="#D97706" /><polygon points="6,10 16,4 26,10" fill="#F59E0B" /><rect x="13" y="16" width="6" height="10" rx="1" fill="#78350F" /></svg>
+    ),
+    startup: (
+      <svg viewBox="0 0 32 32" width={28} height={28}><path d="M16 2L12 14h-6l10 16-4-12h6L16 2z" fill="#F59E0B" stroke="#D97706" strokeWidth="1" /></svg>
+    ),
+    ai_consulting: (
+      <svg viewBox="0 0 32 32" width={28} height={28}><circle cx="16" cy="16" r="12" fill="#7C3AED" /><path d="M10 16h4l2-4 2 8 2-4h4" stroke="#fff" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" /></svg>
+    ),
+    crypto: (
+      <svg viewBox="0 0 32 32" width={28} height={28}><circle cx="16" cy="16" r="12" fill="#F59E0B" /><text x="16" y="22" textAnchor="middle" fontSize="16" fontWeight="bold" fill="#78350F">B</text></svg>
+    ),
+    global_ip: (
+      <svg viewBox="0 0 32 32" width={28} height={28}><circle cx="16" cy="16" r="12" fill="none" stroke="#3B82F6" strokeWidth="2" /><ellipse cx="16" cy="16" rx="6" ry="12" fill="none" stroke="#3B82F6" strokeWidth="1.5" /><path d="M4 16h24M16 4v24" stroke="#3B82F6" strokeWidth="1" /></svg>
+    ),
+  };
+  return icons[jobId] || <svg viewBox="0 0 32 32" width={28} height={28}><circle cx="16" cy="16" r="12" fill="#6B7280" /></svg>;
+}
+
+function UpgradeIcon({ upgradeId }: { upgradeId: string }) {
+  const icons: Record<string, React.ReactNode> = {
+    mouse1: (<svg viewBox="0 0 32 32" width={28} height={28}><circle cx="16" cy="16" r="12" fill="#EF4444" /><path d="M12 18l4-8 4 8" stroke="#fff" strokeWidth="2" fill="none" strokeLinecap="round" /></svg>),
+    mouse2: (<svg viewBox="0 0 32 32" width={28} height={28}><circle cx="16" cy="16" r="12" fill="#8B5CF6" /><path d="M10 16h12M16 10v12" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" /></svg>),
+    mouse3: (<svg viewBox="0 0 32 32" width={28} height={28}><circle cx="16" cy="16" r="12" fill="#F59E0B" /><polygon points="16,6 19,13 27,14 21,19 23,27 16,23 9,27 11,19 5,14 13,13" fill="#fff" /></svg>),
+    mouse4: (<svg viewBox="0 0 32 32" width={28} height={28}><circle cx="16" cy="16" r="12" fill="#10B981" /><path d="M16 8v8l5 5" stroke="#fff" strokeWidth="2" fill="none" strokeLinecap="round" /></svg>),
+  };
+  return icons[upgradeId] || <svg viewBox="0 0 32 32" width={28} height={28}><circle cx="16" cy="16" r="12" fill="#6B7280" /></svg>;
+}
+
+/* --- Floating particles --- */
+function FloatingCoins() {
+  return (
+    <>
+      <style>{`
+        @keyframes coinFloat {
+          0% { transform: translateY(0) rotate(0deg); opacity: 0.4; }
+          50% { transform: translateY(-30px) rotate(180deg); opacity: 0.8; }
+          100% { transform: translateY(-60px) rotate(360deg); opacity: 0; }
+        }
+      `}</style>
+      {[15, 30, 50, 70, 85].map((left, i) => (
+        <div key={i} className="fixed pointer-events-none z-0" style={{
+          left: `${left}%`, bottom: '5%',
+          width: 6, height: 6,
+          borderRadius: '50%',
+          background: '#FBBF24',
+          animation: `coinFloat ${5 + i}s ease-in-out ${i * 0.8}s infinite`,
+          boxShadow: '0 0 8px rgba(251,191,36,0.5)',
+        }} />
+      ))}
+    </>
+  );
+}
 
 // ===== GAME DATA =====
 const FREE_JOBS = [
-  { id: "part_time", name: "コンビニバイト", icon: "", baseCost: 10, baseIncome: 0.1, desc: "¥0.1/秒", premium: false },
-  { id: "freelance", name: "フリーランス案件", icon: "", baseCost: 100, baseIncome: 1, desc: "¥1/秒", premium: false },
-  { id: "youtube", name: "YouTubeチャンネル", icon: "", baseCost: 1_000, baseIncome: 8, desc: "¥8/秒", premium: false },
-  { id: "blog", name: "アフィリエイトブログ", icon: "", baseCost: 8_000, baseIncome: 50, desc: "¥50/秒", premium: false },
-  { id: "ebook", name: "電子書籍出版", icon: "", baseCost: 50_000, baseIncome: 300, desc: "¥300/秒", premium: false },
-  { id: "saas", name: "SaaSプロダクト", icon: "️", baseCost: 300_000, baseIncome: 2_000, desc: "¥2,000/秒", premium: false },
-  { id: "investment", name: "不動産投資", icon: "", baseCost: 2_000_000, baseIncome: 15_000, desc: "¥15,000/秒", premium: false },
-  { id: "startup", name: "スタートアップ創業", icon: "", baseCost: 15_000_000, baseIncome: 120_000, desc: "¥120,000/秒", premium: false },
+  { id: "part_time", name: "コンビニバイト", baseCost: 10, baseIncome: 0.1, desc: "¥0.1/秒", premium: false },
+  { id: "freelance", name: "フリーランス案件", baseCost: 100, baseIncome: 1, desc: "¥1/秒", premium: false },
+  { id: "youtube", name: "YouTubeチャンネル", baseCost: 1_000, baseIncome: 8, desc: "¥8/秒", premium: false },
+  { id: "blog", name: "アフィリエイトブログ", baseCost: 8_000, baseIncome: 50, desc: "¥50/秒", premium: false },
+  { id: "ebook", name: "電子書籍出版", baseCost: 50_000, baseIncome: 300, desc: "¥300/秒", premium: false },
+  { id: "saas", name: "SaaSプロダクト", baseCost: 300_000, baseIncome: 2_000, desc: "¥2,000/秒", premium: false },
+  { id: "investment", name: "不動産投資", baseCost: 2_000_000, baseIncome: 15_000, desc: "¥15,000/秒", premium: false },
+  { id: "startup", name: "スタートアップ創業", baseCost: 15_000_000, baseIncome: 120_000, desc: "¥120,000/秒", premium: false },
 ] as const;
 
 const PREMIUM_JOBS = [
-  { id: "ai_consulting", name: "AIコンサルタント", icon: "", baseCost: 100_000_000, baseIncome: 800_000, desc: "¥800,000/秒", premium: true },
-  { id: "crypto", name: "暗号資産運用", icon: "₿", baseCost: 500_000_000, baseIncome: 5_000_000, desc: "¥5,000,000/秒", premium: true },
-  { id: "global_ip", name: "海外IPライセンス", icon: "", baseCost: 2_000_000_000, baseIncome: 30_000_000, desc: "¥30,000,000/秒", premium: true },
+  { id: "ai_consulting", name: "AIコンサルタント", baseCost: 100_000_000, baseIncome: 800_000, desc: "¥800,000/秒", premium: true },
+  { id: "crypto", name: "暗号資産運用", baseCost: 500_000_000, baseIncome: 5_000_000, desc: "¥5,000,000/秒", premium: true },
+  { id: "global_ip", name: "海外IPライセンス", baseCost: 2_000_000_000, baseIncome: 30_000_000, desc: "¥30,000,000/秒", premium: true },
 ] as const;
 
 const JOBS = [...FREE_JOBS, ...PREMIUM_JOBS] as const;
@@ -25,10 +100,10 @@ const JOBS = [...FREE_JOBS, ...PREMIUM_JOBS] as const;
 type JobId = typeof JOBS[number]["id"];
 
 const CLICK_VALUE_UPGRADES = [
-  { id: "mouse1", name: "やる気UP", icon: "", cost: 50, mult: 2, desc: "クリック値×2" },
-  { id: "mouse2", name: "集中力MAX", icon: "", cost: 500, mult: 5, desc: "クリック値×5" },
-  { id: "mouse3", name: "副業スキル習得", icon: "", cost: 5_000, mult: 10, desc: "クリック値×10" },
-  { id: "mouse4", name: "経営センス覚醒", icon: "", cost: 100_000, mult: 50, desc: "クリック値×50" },
+  { id: "mouse1", name: "やる気UP", cost: 50, mult: 2, desc: "クリック値×2" },
+  { id: "mouse2", name: "集中力MAX", cost: 500, mult: 5, desc: "クリック値×5" },
+  { id: "mouse3", name: "副業スキル習得", cost: 5_000, mult: 10, desc: "クリック値×10" },
+  { id: "mouse4", name: "経営センス覚醒", cost: 100_000, mult: 50, desc: "クリック値×50" },
 ] as const;
 
 const GOAL = 1_000_000;
@@ -241,19 +316,22 @@ export default function FukugyoClicker() {
   const monthlyIncome = incomePerSec * 86400 * 30;
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white select-none">
+    <div className="min-h-screen text-white select-none relative overflow-hidden" style={{
+      background: 'radial-gradient(ellipse at 20% 30%, rgba(99,102,241,0.08) 0%, transparent 50%), radial-gradient(ellipse at 80% 70%, rgba(245,158,11,0.06) 0%, transparent 50%), #0F172A',
+    }}>
+      <FloatingCoins />
       {/* Premium Modal */}
       {showPremiumModal && (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
           <div className="border border-purple-500 rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl"
             style={{ background: "linear-gradient(135deg, rgba(88,28,135,0.95), rgba(49,46,129,0.95))", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)" }}>
-            <div className="text-5xl mb-3"></div>
+            <div className="mb-3"><svg viewBox="0 0 48 48" width={48} height={48} aria-hidden="true"><polygon points="24,2 30,18 48,20 34,32 38,48 24,40 10,48 14,32 0,20 18,18" fill="#FBBF24" /><circle cx="24" cy="24" r="8" fill="#7C3AED" /></svg></div>
             <h2 className="text-xl font-black text-white mb-1">プレミアム解放</h2>
             <p className="text-purple-300 text-xs mb-4">超高収益の3つの副業をアンロック</p>
             <ul className="text-left text-sm space-y-2 mb-6">
               {PREMIUM_JOBS.map(j => (
                 <li key={j.id} className="flex items-center gap-2 text-purple-100">
-                  <span>{j.icon}</span>
+                  <span aria-hidden="true"><JobIcon jobId={j.id} /></span>
                   <span className="font-medium">{j.name}</span>
                   <span className="text-purple-400 text-xs ml-auto">{j.desc}</span>
                 </li>
@@ -291,7 +369,7 @@ export default function FukugyoClicker() {
       {showGoal && (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
           <div className="bg-gradient-to-br from-yellow-400 to-orange-500 rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl">
-            <div className="text-6xl mb-4"></div>
+            <div className="mb-4 flex justify-center"><svg viewBox="0 0 64 64" width={64} height={64} aria-hidden="true"><circle cx="32" cy="32" r="28" fill="#FBBF24" /><path d="M32 12l6 14h16l-13 10 5 15-14-10-14 10 5-15L10 26h16z" fill="#FEF3C7" /></svg></div>
             <h2 className="text-2xl font-black text-white mb-2">月収¥100万達成！</h2>
             <p className="text-white/90 text-sm mb-6">あなたは真の副業マスターになりました！</p>
             <button onClick={shareToX}
@@ -312,7 +390,12 @@ export default function FukugyoClicker() {
       <header className="border-b border-slate-700 px-4 py-3"
         style={{ background: "rgba(30,41,59,0.85)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
         <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <h1 className="font-black text-yellow-400 text-lg m-0">副業クリッカー</h1>
+          <h1 className="font-black text-lg m-0" style={{
+            background: 'linear-gradient(135deg, #FBBF24 0%, #F59E0B 50%, #D97706 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            filter: 'drop-shadow(0 0 8px rgba(251,191,36,0.4))',
+          }}>副業クリッカー</h1>
           <div className="flex items-center gap-3">
             {streak && streak.count > 0 && (
               <div
@@ -402,7 +485,7 @@ export default function FukugyoClicker() {
               className="relative w-48 h-48 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 shadow-2xl hover:scale-105 active:scale-95 transition-transform flex flex-col items-center justify-center"
               aria-label={`クリックして¥${clickMult}稼ぐ`}
               type="button">
-              <span className="text-5xl" aria-hidden="true">お金</span>
+              <span aria-hidden="true"><svg viewBox="0 0 48 48" width={56} height={56}><circle cx="24" cy="24" r="20" fill="#FBBF24" /><circle cx="24" cy="24" r="15" fill="#F59E0B" /><text x="24" y="31" textAnchor="middle" fontSize="22" fontWeight="bold" fill="#78350F">$</text></svg></span>
               <span className="font-black text-white text-sm mt-1">クリック！</span>
               <span className="text-white/80 text-xs">¥{clickMult}/回</span>
               {floats.map(f => (
@@ -427,7 +510,7 @@ export default function FukugyoClicker() {
                   <button key={u.id} onClick={() => buyUpgrade(u)} disabled={bought || !canAfford}
                     aria-label={bought ? `${u.name}は取得済み` : `${u.name}を${fmt(u.cost)}で購入する（${u.desc}）`}
                     className={`w-full flex items-center gap-3 p-2 rounded-xl text-left transition-colors ${bought ? "bg-green-900/30 opacity-50 cursor-default" : canAfford ? "bg-slate-700 hover:bg-slate-600" : "bg-slate-700/50 opacity-40 cursor-default"}`}>
-                    <span className="text-2xl">{u.icon}</span>
+                    <span aria-hidden="true"><UpgradeIcon upgradeId={u.id} /></span>
                     <div className="flex-1">
                       <div className="text-sm font-medium">{u.name}</div>
                       <div className="text-xs text-slate-400">{u.desc}</div>
@@ -461,7 +544,7 @@ export default function FukugyoClicker() {
                     <button key={job.id} onClick={() => setShowPremiumModal(true)}
                       aria-label={`${job.name}はプレミアム限定です。プレミアムプランに登録してアンロックする`}
                       className="w-full flex items-center gap-3 p-3 rounded-xl text-left bg-purple-900/30 border border-purple-800/50 hover:bg-purple-900/50 transition-colors">
-                      <span className="text-2xl grayscale opacity-60">{job.icon}</span>
+                      <span className="grayscale opacity-60" aria-hidden="true"><JobIcon jobId={job.id} /></span>
                       <div className="flex-1">
                         <div className="text-sm font-medium text-purple-400"> {job.name}</div>
                         <div className="text-xs text-purple-600">{job.desc}</div>
@@ -475,7 +558,7 @@ export default function FukugyoClicker() {
                     disabled={!canAfford}
                     aria-label={`${job.name}を${fmt(jobCost(job.id, job.baseCost))}で購入する（${job.desc}）`}
                     className={`w-full flex items-center gap-3 p-3 rounded-xl text-left transition-colors ${canAfford ? "bg-slate-700 hover:bg-slate-600 active:scale-98" : "bg-slate-700/40 opacity-50 cursor-default"}`}>
-                    <span className="text-2xl">{job.icon}</span>
+                    <span aria-hidden="true"><JobIcon jobId={job.id} /></span>
                     <div className="flex-1">
                       <div className="text-sm font-medium">{job.name}</div>
                       <div className="text-xs text-slate-400">{job.desc}</div>
@@ -496,7 +579,7 @@ export default function FukugyoClicker() {
               aria-label="プレミアムプランを月額500円で解放する。AIコンサルタント・暗号資産運用・海外IPライセンスがアンロック"
               className="w-full bg-gradient-to-r from-purple-900 to-indigo-900 border border-purple-700 rounded-2xl p-4 text-left hover:border-purple-500 transition-colors">
               <div className="flex items-center gap-2">
-                <span className="text-xl"></span>
+                <span aria-hidden="true"><svg viewBox="0 0 24 24" width={24} height={24}><polygon points="12,2 15,9 22,10 17,15 18,22 12,19 6,22 7,15 2,10 9,9" fill="#FBBF24" /></svg></span>
                 <div>
                   <div className="text-sm font-bold text-purple-200">プレミアム解放 ¥500/月</div>
                   <div className="text-xs text-purple-400">AIコンサル・暗号資産・海外IPをアンロック</div>

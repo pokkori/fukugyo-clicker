@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
+import { Noto_Sans_JP } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
+
+const notoSansJP = Noto_Sans_JP({ subsets: ["latin"], weight: ["400", "700"], display: "swap" });
 
 const SITE_URL = "https://fukugyo-advisor-ai.vercel.app";
 const TITLE = "副業クリッカー | クリックして月収¥100万を目指せ！";
@@ -25,6 +28,7 @@ export const metadata: Metadata = {
     images: [`${SITE_URL}/og.png`],
   },
   metadataBase: new URL(SITE_URL),
+  other: { "theme-color": "#0f172a" },
 };
 
 const jsonLd = {
@@ -52,7 +56,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
-      <body>
+      <body className={`${notoSansJP.className} text-slate-100 antialiased`}>
         <Script
           async
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXX"
