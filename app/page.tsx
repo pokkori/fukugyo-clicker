@@ -1,6 +1,8 @@
 "use client";
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { updateStreak, loadStreak, getStreakMilestoneMessage, type StreakData } from "@/lib/streak";
+import OrbBackground from "@/components/OrbBackground";
+import { useClickerBGM } from "@/hooks/useClickerBGM";
 
 /* --- SVG Job Icons --- */
 function JobIcon({ jobId }: { jobId: string }) {
@@ -52,25 +54,25 @@ function UpgradeIcon({ upgradeId }: { upgradeId: string }) {
   return icons[upgradeId] || <svg viewBox="0 0 32 32" width={28} height={28}><circle cx="16" cy="16" r="12" fill="#6B7280" /></svg>;
 }
 
-/* --- Floating particles --- */
+/* --- Floating coins (coin particle overlay) --- */
 function FloatingCoins() {
   return (
     <>
       <style>{`
         @keyframes coinFloat {
-          0% { transform: translateY(0) rotate(0deg); opacity: 0.4; }
-          50% { transform: translateY(-30px) rotate(180deg); opacity: 0.8; }
-          100% { transform: translateY(-60px) rotate(360deg); opacity: 0; }
+          0% { transform: translateY(0) rotate(0deg); opacity: 0.5; }
+          50% { transform: translateY(-36px) rotate(180deg); opacity: 0.9; }
+          100% { transform: translateY(-72px) rotate(360deg); opacity: 0; }
         }
       `}</style>
-      {[15, 30, 50, 70, 85].map((left, i) => (
+      {[10, 25, 42, 62, 78, 90].map((left, i) => (
         <div key={i} className="fixed pointer-events-none z-0" style={{
-          left: `${left}%`, bottom: '5%',
-          width: 6, height: 6,
+          left: `${left}%`, bottom: '3%',
+          width: 7, height: 7,
           borderRadius: '50%',
-          background: '#FBBF24',
-          animation: `coinFloat ${5 + i}s ease-in-out ${i * 0.8}s infinite`,
-          boxShadow: '0 0 8px rgba(251,191,36,0.5)',
+          background: 'radial-gradient(circle, #FBBF24 0%, #D97706 100%)',
+          animation: `coinFloat ${5 + i * 0.9}s ease-in-out ${i * 0.7}s infinite`,
+          boxShadow: '0 0 10px rgba(251,191,36,0.7)',
         }} />
       ))}
     </>
@@ -182,8 +184,11 @@ export default function FukugyoClicker() {
   const [streakMsg, setStreakMsg] = useState<string | null>(null);
   const [offlineBonus, setOfflineBonus] = useState(0);
   const [showOfflineBonus, setShowOfflineBonus] = useState(false);
+  const [bgmMuted, setBgmMuted] = useState(false);
   const floatId = useRef(0);
   const prevTotalRef = useRef(0);
+  const bgmStartedRef = useRef(false);
+  const { start: bgmStart, stop: bgmStop, setMuted: bgmSetMuted, playCoin, playUpgrade, playMilestone } = useClickerBGM();
 
   // Load save
   useEffect(() => {
@@ -209,6 +214,24 @@ export default function FukugyoClicker() {
     }
     // 最終アクティブ時間を記録
     localStorage.setItem(LAST_ACTIVE_KEY, String(Date.now()));
+
+    // BGM: 初回ユーザーインタラクションで開始（autoplay policy 対応）
+    const startBgmOnce = () => {
+      if (!bgmStartedRef.current) {
+        bgmStartedRef.current = true;
+        bgmStart();
+      }
+      document.removeEventListener("click", startBgmOnce);
+      document.removeEventListener("touchstart", startBgmOnce);
+    };
+    document.addEventListener("click", startBgmOnce);
+    document.addEventListener("touchstart", startBgmOnce);
+    return () => {
+      document.removeEventListener("click", startBgmOnce);
+      document.removeEventListener("touchstart", startBgmOnce);
+      bgmStop();
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Auto-save every 5s + 最終アクティブ時間更新
@@ -257,6 +280,7 @@ export default function FukugyoClicker() {
     const val = clickMult;
     setMoney(m => m + val);
     setTotalEarned(te => te + val);
+    playCoin();
     setClicks(c => {
       if (c === 0) {
         const s = updateStreak("fukugyou");
@@ -272,7 +296,7 @@ export default function FukugyoClicker() {
       id, x: e.clientX - rect.left, y: e.clientY - rect.top, val
     }]);
     setTimeout(() => setFloats(f => f.filter(x => x.id !== id)), 800);
-  }, [clickMult]);
+  }, [clickMult, playCoin]);
 
   const jobCost = (jobId: string, base: number) => {
     const cnt = jobs[jobId] || 0;
@@ -284,6 +308,7 @@ export default function FukugyoClicker() {
     if (money < cost) return;
     setMoney(m => m - cost);
     setJobs(j => ({ ...j, [job.id]: (j[job.id] || 0) + 1 }));
+    playUpgrade();
   };
 
   const buyUpgrade = (u: typeof CLICK_VALUE_UPGRADES[number]) => {
@@ -291,6 +316,7 @@ export default function FukugyoClicker() {
     setMoney(m => m - u.cost);
     setClickMult(c => c * u.mult);
     setBoughtUpgrades(b => [...b, u.id]);
+    playMilestone();
   };
 
   const resetGame = () => {
@@ -316,10 +342,11 @@ export default function FukugyoClicker() {
   const monthlyIncome = incomePerSec * 86400 * 30;
 
   return (
-    <div className="min-h-screen text-white select-none relative overflow-hidden" style={{
-      background: 'radial-gradient(ellipse at 20% 30%, rgba(99,102,241,0.08) 0%, transparent 50%), radial-gradient(ellipse at 80% 70%, rgba(245,158,11,0.06) 0%, transparent 50%), #0F172A',
-    }}>
+    <div className="min-h-screen text-white select-none relative overflow-hidden" style={{ background: "transparent" }}>
+      {/* OrbBackground: fixed, z-index:0 */}
+      <OrbBackground />
       <FloatingCoins />
+      <div style={{ position: "relative", zIndex: 1 }}>
       {/* Premium Modal */}
       {showPremiumModal && (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
@@ -387,16 +414,47 @@ export default function FukugyoClicker() {
       )}
 
       {/* Header */}
-      <header className="border-b border-slate-700 px-4 py-3"
-        style={{ background: "rgba(30,41,59,0.85)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
+      <header className="border-b border-slate-700/60 px-4 py-3"
+        style={{ background: "rgba(10,15,30,0.88)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", position: "relative", zIndex: 1 }}>
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <h1 className="font-black text-lg m-0" style={{
             background: 'linear-gradient(135deg, #FBBF24 0%, #F59E0B 50%, #D97706 100%)',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
-            filter: 'drop-shadow(0 0 8px rgba(251,191,36,0.4))',
+            filter: 'drop-shadow(0 0 10px rgba(251,191,36,0.5))',
           }}>副業クリッカー</h1>
           <div className="flex items-center gap-3">
+            {/* BGMミュートボタン */}
+            <button
+              onClick={() => { const next = !bgmMuted; setBgmMuted(next); bgmSetMuted(next); }}
+              style={{
+                minHeight: 36, minWidth: 36,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                borderRadius: 10,
+                border: "1px solid rgba(255,255,255,0.15)",
+                background: "rgba(255,255,255,0.07)",
+                backdropFilter: "blur(8px)",
+                cursor: "pointer",
+                padding: "0 8px",
+              }}
+              aria-label={bgmMuted ? "BGMをオンにする" : "BGMをオフにする"}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                {bgmMuted ? (
+                  <>
+                    <path d="M11 5L6 9H2v6h4l5 4V5z" fill="#6B7280" />
+                    <line x1="23" y1="9" x2="17" y2="15" stroke="#EF4444" strokeWidth="2" strokeLinecap="round" />
+                    <line x1="17" y1="9" x2="23" y2="15" stroke="#EF4444" strokeWidth="2" strokeLinecap="round" />
+                  </>
+                ) : (
+                  <>
+                    <path d="M11 5L6 9H2v6h4l5 4V5z" fill="#FBBF24" />
+                    <path d="M15.54 8.46a5 5 0 0 1 0 7.07" stroke="#FBBF24" strokeWidth="2" strokeLinecap="round" />
+                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14" stroke="#FBBF24" strokeWidth="1.5" strokeLinecap="round" />
+                  </>
+                )}
+              </svg>
+            </button>
             {streak && streak.count > 0 && (
               <div
                 className="flex items-center gap-1 bg-orange-500/20 border border-orange-500/40 rounded-full px-3 py-1"
@@ -446,7 +504,7 @@ export default function FukugyoClicker() {
         </div>
       )}
 
-      <div className="max-w-4xl mx-auto px-4 py-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="max-w-4xl mx-auto px-4 py-4 grid grid-cols-1 md:grid-cols-2 gap-4" style={{ position: "relative", zIndex: 1 }}>
         {/* Left: Click Area */}
         <div className="flex flex-col gap-4">
           {/* Stats */}
@@ -454,7 +512,7 @@ export default function FukugyoClicker() {
             style={{ background: "rgba(30,41,59,0.85)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
             <div>
               <div className="text-xs text-slate-400">所持金</div>
-              <div className="font-bold text-green-400 text-sm">{fmt(money)}</div>
+              <div className="font-bold text-yellow-300 text-sm" style={{ textShadow: "0 0 20px rgba(251,191,36,0.5)" }}>{fmt(money)}</div>
             </div>
             <div>
               <div className="text-xs text-slate-400">月収</div>
@@ -482,7 +540,10 @@ export default function FukugyoClicker() {
           {/* Click Button */}
           <div className="relative flex justify-center">
             <button onClick={handleClick}
-              className="relative w-48 h-48 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 shadow-2xl hover:scale-105 active:scale-95 transition-transform flex flex-col items-center justify-center"
+              className="relative w-48 h-48 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 hover:scale-105 active:scale-95 transition-transform flex flex-col items-center justify-center"
+              style={{
+                boxShadow: "0 0 30px rgba(251,191,36,0.6), 0 0 60px rgba(251,191,36,0.25), 0 8px 32px rgba(0,0,0,0.5)",
+              }}
               aria-label={`クリックして¥${clickMult}稼ぐ`}
               type="button">
               <span aria-hidden="true"><svg viewBox="0 0 48 48" width={56} height={56}><circle cx="24" cy="24" r="20" fill="#FBBF24" /><circle cx="24" cy="24" r="15" fill="#F59E0B" /><text x="24" y="31" textAnchor="middle" fontSize="22" fontWeight="bold" fill="#78350F">$</text></svg></span>
@@ -624,6 +685,7 @@ export default function FukugyoClicker() {
             <a href="/privacy" className="hover:text-slate-400">プライバシーポリシー</a>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );
