@@ -428,7 +428,7 @@ export default function FukugyoClicker() {
             <button
               onClick={() => { const next = !bgmMuted; setBgmMuted(next); bgmSetMuted(next); }}
               style={{
-                minHeight: 36, minWidth: 36,
+                minHeight: 44, minWidth: 44,
                 display: "flex", alignItems: "center", justifyContent: "center",
                 borderRadius: 10,
                 border: "1px solid rgba(255,255,255,0.15)",
