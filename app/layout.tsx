@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Noto_Sans_JP } from "next/font/google";
 import Script from "next/script";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 
 const notoSansJP = Noto_Sans_JP({ subsets: ["latin"], weight: ["400", "700"], display: "swap" });
@@ -115,6 +116,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           strategy="afterInteractive"
         />
         {children}
+        <SpeedInsights />
         <footer className="border-t border-gray-800 py-6 text-center text-xs text-gray-500">
           <nav className="flex gap-6 justify-center" aria-label="フッターナビゲーション">
             <a href="/legal" aria-label="特定商取引法に基づく表記" className="hover:text-gray-300 transition-colors">特商法</a>
