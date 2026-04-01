@@ -3,6 +3,7 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { updateStreak, loadStreak, getStreakMilestoneMessage, type StreakData } from "@/lib/streak";
 import OrbBackground from "@/components/OrbBackground";
 import { useClickerBGM } from "@/hooks/useClickerBGM";
+import { ScorePopLayer, type ScorePopItem } from "@/components/ScorePop";
 
 /* --- SVG Job Icons --- */
 function JobIcon({ jobId }: { jobId: string }) {
@@ -185,9 +186,14 @@ export default function FukugyoClicker() {
   const [offlineBonus, setOfflineBonus] = useState(0);
   const [showOfflineBonus, setShowOfflineBonus] = useState(false);
   const [bgmMuted, setBgmMuted] = useState(false);
+  const [scorePopItems, setScorePopItems] = useState<ScorePopItem[]>([]);
+  const [glowClass, setGlowClass] = useState("glow-normal");
+  const [shakeKey, setShakeKey] = useState(0);
+  const [isShaking, setIsShaking] = useState(false);
   const floatId = useRef(0);
   const prevTotalRef = useRef(0);
   const bgmStartedRef = useRef(false);
+  const scorePopId = useRef(0);
   const { start: bgmStart, stop: bgmStop, setMuted: bgmSetMuted, playCoin, playUpgrade, playMilestone } = useClickerBGM();
 
   // Load save
@@ -296,7 +302,29 @@ export default function FukugyoClicker() {
       id, x: e.clientX - rect.left, y: e.clientY - rect.top, val
     }]);
     setTimeout(() => setFloats(f => f.filter(x => x.id !== id)), 800);
-  }, [clickMult, playCoin]);
+
+    // ScorePop: +¥N 浮き上がりアニメ
+    const popId = scorePopId.current++;
+    setScorePopItems(prev => [...prev, {
+      id: popId,
+      value: val,
+      combo: Math.floor(clicks / 10),
+      x: e.clientX,
+      y: e.clientY - 20,
+    }]);
+    // コンボ段階によるグロー変化
+    const comboLevel = Math.floor((clicks + 1) / 10);
+    if (comboLevel >= 5) setGlowClass("glow-fever");
+    else if (comboLevel >= 2) setGlowClass("glow-combo");
+    else setGlowClass("glow-normal");
+    // フィーバー演出: combo 10の倍数でfever-flashを挿入
+    if ((clicks + 1) % 100 === 0) {
+      const flashEl = document.createElement("div");
+      flashEl.className = "fever-flash";
+      document.body.appendChild(flashEl);
+      setTimeout(() => flashEl.remove(), 500);
+    }
+  }, [clickMult, playCoin, clicks]);
 
   const jobCost = (jobId: string, base: number) => {
     const cnt = jobs[jobId] || 0;
@@ -317,6 +345,13 @@ export default function FukugyoClicker() {
     setClickMult(c => c * u.mult);
     setBoughtUpgrades(b => [...b, u.id]);
     playMilestone();
+    // アップグレード購入時: シェイク演出
+    setIsShaking(false);
+    setTimeout(() => {
+      setIsShaking(true);
+      setShakeKey(k => k + 1);
+      setTimeout(() => setIsShaking(false), 400);
+    }, 10);
   };
 
   const resetGame = () => {
@@ -342,7 +377,16 @@ export default function FukugyoClicker() {
   const monthlyIncome = incomePerSec * 86400 * 30;
 
   return (
-    <div className="min-h-screen text-white select-none relative overflow-hidden" style={{ background: "transparent" }}>
+    <div
+      key={shakeKey}
+      className={`min-h-screen text-white select-none relative overflow-hidden ${isShaking ? "screen-shake" : ""}`}
+      style={{ background: "transparent" }}
+    >
+      {/* ScorePopLayer: fixed overlay */}
+      <ScorePopLayer
+        items={scorePopItems}
+        onRemove={id => setScorePopItems(prev => prev.filter(p => p.id !== id))}
+      />
       {/* OrbBackground: fixed, z-index:0 */}
       <OrbBackground />
       <FloatingCoins />
@@ -540,9 +584,10 @@ export default function FukugyoClicker() {
           {/* Click Button */}
           <div className="relative flex justify-center">
             <button onClick={handleClick}
-              className="relative w-48 h-48 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 hover:scale-105 active:scale-95 transition-transform flex flex-col items-center justify-center"
+              className={`relative w-48 h-48 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 hover:scale-105 active:scale-95 transition-transform flex flex-col items-center justify-center ${glowClass}`}
               style={{
-                boxShadow: "0 0 30px rgba(251,191,36,0.6), 0 0 60px rgba(251,191,36,0.25), 0 8px 32px rgba(0,0,0,0.5)",
+                boxShadow: undefined,
+                transition: "box-shadow 0.3s cubic-bezier(0.22, 1, 0.36, 1), transform 0.1s",
               }}
               aria-label={`クリックして¥${clickMult}稼ぐ`}
               type="button">
