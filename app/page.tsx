@@ -5,6 +5,7 @@ import OrbBackground from "@/components/OrbBackground";
 import { useClickerBGM } from "@/hooks/useClickerBGM";
 import { ScorePopLayer, type ScorePopItem } from "@/components/ScorePop";
 import { ParticleCanvas, triggerParticleBurst } from "@/components/ParticleCanvas";
+import CharacterAvatar, { type Emotion } from "@/components/CharacterAvatar";
 
 /* --- SVG Job Icons --- */
 function JobIcon({ jobId }: { jobId: string }) {
@@ -562,6 +563,19 @@ export default function FukugyoClicker() {
       <div className="max-w-4xl mx-auto px-4 py-4 grid grid-cols-1 md:grid-cols-2 gap-4" style={{ position: "relative", zIndex: 1 }}>
         {/* Left: Click Area */}
         <div className="flex flex-col gap-4">
+          {/* CharacterAvatar: 月収に応じた感情表示 */}
+          <div className="flex justify-center pt-2">
+            <CharacterAvatar
+              emotion={((): Emotion => {
+                if (monthlyIncome >= 1_000_000) return "happy";
+                if (monthlyIncome >= 100_000) return "happy";
+                if (money < 10) return "sad";
+                return "normal";
+              })()}
+              message={monthlyIncome >= 1_000_000 ? "月収100万達成！" : monthlyIncome >= 100_000 ? "いい感じ！" : monthlyIncome >= 10_000 ? "がんばろう！" : undefined}
+              size={80}
+            />
+          </div>
           {/* Stats */}
           <div className="rounded-2xl p-4 grid grid-cols-3 gap-3 text-center"
             style={{ background: "rgba(30,41,59,0.85)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
