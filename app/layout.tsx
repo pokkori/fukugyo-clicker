@@ -59,7 +59,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={`${notoSansJP.className} text-slate-100 antialiased`}>
         <Script
           async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXX"
+          src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID ?? 'ca-pub-XXXXXXXX'}`}
           crossOrigin="anonymous"
           strategy="afterInteractive"
         />
