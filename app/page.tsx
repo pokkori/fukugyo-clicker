@@ -577,7 +577,7 @@ export default function FukugyoClicker() {
             />
           </div>
           {/* Stats */}
-          <div className="rounded-2xl p-4 grid grid-cols-3 gap-3 text-center"
+          <div className="glass-dark rounded-2xl p-4 grid grid-cols-3 gap-3 text-center"
             style={{ background: "rgba(30,41,59,0.85)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
             <div>
               <div className="text-xs text-slate-400">所持金</div>
@@ -594,7 +594,7 @@ export default function FukugyoClicker() {
           </div>
 
           {/* Progress Bar */}
-          <div className="rounded-2xl p-4"
+          <div className="glass-dark rounded-2xl p-4"
             style={{ background: "rgba(30,41,59,0.85)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
             <div className="flex justify-between text-xs text-slate-400 mb-2">
               <span>月収¥100万達成まで</span>
@@ -630,7 +630,7 @@ export default function FukugyoClicker() {
           </div>
 
           {/* Click Upgrades */}
-          <div className="rounded-2xl p-4"
+          <div className="glass-dark rounded-2xl p-4"
             style={{ background: "rgba(30,41,59,0.85)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
             <h3 className="font-bold text-sm text-slate-300 mb-3">スキルアップグレード</h3>
             <div className="space-y-2">
@@ -658,7 +658,7 @@ export default function FukugyoClicker() {
 
         {/* Right: Jobs */}
         <div className="flex flex-col gap-4">
-          <div className="rounded-2xl p-4"
+          <div className="glass-dark rounded-2xl p-4"
             style={{ background: "rgba(30,41,59,0.85)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-bold text-sm text-slate-300">副業一覧</h3>
@@ -721,7 +721,7 @@ export default function FukugyoClicker() {
           )}
 
           {/* Share & Reset */}
-          <div className="rounded-2xl p-4 space-y-2"
+          <div className="glass-dark rounded-2xl p-4 space-y-2"
             style={{ background: "rgba(30,41,59,0.85)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
             <button onClick={shareToX}
               aria-label="副業クリッカーの記録をXにシェアする"
@@ -741,7 +741,7 @@ export default function FukugyoClicker() {
           </div>
 
           {/* Stats */}
-          <div className="rounded-2xl p-4 text-xs text-slate-400 space-y-1"
+          <div className="glass-dark rounded-2xl p-4 text-xs text-slate-400 space-y-1"
             style={{ background: "rgba(30,41,59,0.85)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
             <div className="flex justify-between"><span>総クリック数</span><span className="text-white">{clicks.toLocaleString()}回</span></div>
             <div className="flex justify-between"><span>副業種類</span><span className="text-white">{Object.keys(jobs).filter(k => (jobs[k] || 0) > 0).length}種類</span></div>
