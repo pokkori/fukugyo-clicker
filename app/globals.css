@@ -85,6 +85,14 @@ body {
 .glow-combo  { box-shadow: 0 0 40px rgba(255,217,61,0.6), 0 0 80px rgba(255,217,61,0.3); transition: box-shadow 0.3s cubic-bezier(0.22, 1, 0.36, 1); }
 .glow-fever  { box-shadow: 0 0 60px rgba(255,23,68,0.8), 0 0 120px rgba(255,23,68,0.4); transition: box-shadow 0.3s cubic-bezier(0.22, 1, 0.36, 1); }
 
+/* ===== ボタン: spring easing統一 ===== */
+button {
+  transition: transform 120ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 120ms ease-out;
+}
+button:active {
+  transform: scale(0.95);
+}
+
 /* ===== VFX: ミリオン達成バナー ===== */
 @keyframes goalBanner {
   0%   { transform: translateY(-60px) scale(0.8); opacity: 0; }

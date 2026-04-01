@@ -4,6 +4,7 @@ import { updateStreak, loadStreak, getStreakMilestoneMessage, type StreakData } 
 import OrbBackground from "@/components/OrbBackground";
 import { useClickerBGM } from "@/hooks/useClickerBGM";
 import { ScorePopLayer, type ScorePopItem } from "@/components/ScorePop";
+import { ParticleCanvas, triggerParticleBurst } from "@/components/ParticleCanvas";
 
 /* --- SVG Job Icons --- */
 function JobIcon({ jobId }: { jobId: string }) {
@@ -323,6 +324,14 @@ export default function FukugyoClicker() {
       flashEl.className = "fever-flash";
       document.body.appendChild(flashEl);
       setTimeout(() => flashEl.remove(), 500);
+      // フィーバーパーティクル: 画面中央から爆発
+      triggerParticleBurst(window.innerWidth / 2, window.innerHeight / 2, 'fever');
+    } else if (comboLevel >= 2 && (clicks + 1) % 10 === 0) {
+      // コンボ達成パーティクル
+      triggerParticleBurst(e.clientX, e.clientY, 'combo');
+    } else {
+      // 通常クリックパーティクル
+      triggerParticleBurst(e.clientX, e.clientY, 'normal');
     }
   }, [clickMult, playCoin, clicks]);
 
@@ -387,6 +396,8 @@ export default function FukugyoClicker() {
         items={scorePopItems}
         onRemove={id => setScorePopItems(prev => prev.filter(p => p.id !== id))}
       />
+      {/* ParticleCanvas: グロー付きCanvasパーティクル */}
+      <ParticleCanvas />
       {/* OrbBackground: fixed, z-index:0 */}
       <OrbBackground />
       <FloatingCoins />
