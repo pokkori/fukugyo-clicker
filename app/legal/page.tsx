@@ -2,7 +2,7 @@ import Link from "next/link";
 
 const ITEMS = [
   { label: "販売業者", value: "ポッコリラボ" },
-  { label: "運営責任者", value: "ポッコリラボ 代表 新美" },
+  { label: "運営責任者", value: "ポッコリラボ 代表 新美諭" },
   { label: "所在地", value: "非公開（請求があれば遅滞なく開示します）" },
   { label: "電話番号", value: "非公開（請求があれば遅滞なく開示します）" },
   { label: "お問い合わせ", value: "X(Twitter) @levona_design へのDM" },
