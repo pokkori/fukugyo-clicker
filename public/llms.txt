@@ -1,30 +1,27 @@
 # 副業クリッカー
+> 副業・お小遣い稼ぎをゲーム感覚で学べるクリッカーゲーム
 
-> クリックして副業を積み上げ、月収¥100万を目指すブラウザクリッカーゲーム
+## サービス概要
+- **カテゴリ**: ゲーム
+- **URL**: https://fukugyo-advisor-ai.vercel.app
+- **提供形態**: Webブラウザで利用可能（登録不要で試せます）
+- **開発**: Claude Code + Next.js 16 + Vercel
 
-## About
-副業クリッカーは、サラリーマンから起業家へのサクセスストーリーをクリッカーゲームで体験できる無料ブラウザゲームです。コンビニバイトからスタートして副業を積み重ね、最終的にはスタートアップ創業・AIコンサルタント・海外IPライセンスまで到達できます。
+## 主要ページ
+- [トップページ](https://fukugyo-advisor-ai.vercel.app/): メイン機能・サービス説明
+- [ツール](https://fukugyo-advisor-ai.vercel.app/tool): AI機能の利用画面（一部サービス）
+- [プライバシーポリシー](https://fukugyo-advisor-ai.vercel.app/privacy): 個人情報の取り扱い
+- [特定商取引法に基づく表記](https://fukugyo-advisor-ai.vercel.app/legal): 法的情報
 
-## Features
-- 11種類の副業: コンビニバイト〜海外IPライセンスまで段階的にアンロック
-- クリックアップグレード: やる気UP・集中力MAX・副業スキル習得・経営センス覚醒の4種
-- オフライン収益: プレミアムプランでゲームを閉じていても最大12時間分の収益が加算
-- ストリーク機能: 毎日プレイするとボーナスメッセージが表示される連続プレイ記録
-- Xシェア: 現在の月収・副業種類数をワンクリックでXに投稿
-- BGMコントロール: 環境に合わせてBGMをオン/オフ切り替え可能
+## 利用シーン
+副業・お小遣い稼ぎをゲーム感覚で学べるクリッカーゲーム
 
-## Pricing
-- 無料プラン: 8種類の副業が無料でプレイ可能
-- プレミアムプラン: ¥500/月 — 上位3副業アンロック・オフライン収益機能
+## 技術スタック
+- フロントエンド: Next.js 16, React 19, TypeScript, Tailwind CSS
+- AI: Claude claude-sonnet-4-6 (Anthropic)
+- バックエンド: Vercel Edge Functions, Supabase
+- 決済: KOMOJU（クレジットカード・コンビニ払い対応）
 
-## Game Data
-- 月収目標: ¥1,000,000
-- 無料副業数: 8種類
-- プレミアム副業数: 3種類（AIコンサルタント・暗号資産運用・海外IPライセンス）
-- セーブ方式: ブラウザのローカルストレージ（サーバー不要）
-
-## Links
-- [ゲームトップ](https://fukugyo-advisor-ai.vercel.app)
-- [特定商取引法に基づく表記](https://fukugyo-advisor-ai.vercel.app/legal)
-- [プライバシーポリシー](https://fukugyo-advisor-ai.vercel.app/privacy)
-- [利用規約](https://fukugyo-advisor-ai.vercel.app/terms)
+## robots.txt
+AIクローラーによるインデックスを歓迎します。
+GPTBot, ClaudeBot, PerplexityBot, Googlebot-Extended のアクセスを許可しています。
