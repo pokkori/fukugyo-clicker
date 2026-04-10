@@ -400,7 +400,7 @@ export default function FukugyoClicker() {
       {/* ParticleCanvas: グロー付きCanvasパーティクル */}
       <ParticleCanvas />
       {/* OrbBackground: fixed, z-index:0 */}
-      <OrbBackground />
+      <OrbBackground theme="finance" />
       <FloatingCoins />
       <div style={{ position: "relative", zIndex: 1 }}>
       {/* Premium Modal */}
