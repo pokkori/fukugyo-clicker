@@ -4,7 +4,7 @@ const ITEMS = [
   { label: "販売業者", value: "ポッコリラボ" },
   { label: "運営責任者", value: "ポッコリラボ 代表 新美諭" },
   { label: "所在地", value: "非公開（請求があれば遅滞なく開示します）" },
-  { label: "電話番号", value: "非公開（請求があれば遅滞なく開示します）" },
+  { label: "電話番号", value: "090-6093-5290" },
   { label: "お問い合わせ", value: "X(Twitter) @levona_design へのDM" },
   { label: "販売価格", value: "プレミアムプラン ¥500/月（税込）" },
   { label: "支払方法", value: "クレジットカード（Visa・Mastercard・American Express・JCB）" },
